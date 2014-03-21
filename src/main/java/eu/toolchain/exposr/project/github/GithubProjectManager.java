@@ -23,12 +23,14 @@ import eu.toolchain.exposr.project.ProjectLog;
 import eu.toolchain.exposr.project.ProjectManager;
 import eu.toolchain.exposr.project.ProjectReporter;
 import eu.toolchain.exposr.project.ProjectSync;
-import eu.toolchain.exposr.project.github.GitProject.AuthProvider;
+import eu.toolchain.exposr.project.git.GitProject;
+import eu.toolchain.exposr.project.git.GitProject.AuthProvider;
 import eu.toolchain.exposr.taskmanager.DefaultTaskManager;
 import eu.toolchain.exposr.taskmanager.HandleBuilder;
 import eu.toolchain.exposr.taskmanager.HandleBuilder.OnDone;
 import eu.toolchain.exposr.taskmanager.Handlers;
-import eu.toolchain.exposr.tasks.RefreshTask;
+import eu.toolchain.exposr.taskmanager.Task;
+import eu.toolchain.exposr.taskmanager.TaskState;
 
 @Slf4j
 @ToString(of = { "user", "remoteName" })
@@ -64,6 +66,13 @@ public class GithubProjectManager implements ProjectManager, ProjectReporter {
         }
     }
     
+    private class RefreshTask implements Task<List<Project>> {
+        @Override
+        public List<Project> run(TaskState state) throws Exception {
+            return GithubProjectManager.this.fetchProjects();
+        }
+    }
+
     private final GitHubClient client;
     private final String user;
     private final String remoteName;
@@ -90,7 +99,7 @@ public class GithubProjectManager implements ProjectManager, ProjectReporter {
 
     @Override
     public HandleBuilder<Void> refresh() {
-        final RefreshTask task = new RefreshTask(this);
+        final RefreshTask task = new RefreshTask();
         
         final HandleBuilder<List<Project>> builder = taskManager.build(
                 "refresh " + this, task);
@@ -112,7 +121,6 @@ public class GithubProjectManager implements ProjectManager, ProjectReporter {
         return projects;
     }
 
-    @Override
     public List<Project> fetchProjects() throws ProjectException {
         log.info("Fetching Projects");
 

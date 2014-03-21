@@ -4,8 +4,10 @@ import lombok.Getter;
 import lombok.Setter;
 import eu.toolchain.exposr.builder.Builder;
 import eu.toolchain.exposr.builder.LocalBuilder;
+import eu.toolchain.exposr.project.InMemoryProjectReporter;
 import eu.toolchain.exposr.project.LocalRepository;
 import eu.toolchain.exposr.project.ProjectManager;
+import eu.toolchain.exposr.project.ProjectReporter;
 import eu.toolchain.exposr.project.github.GithubProjectManager;
 import eu.toolchain.exposr.publisher.LocalPublisher;
 import eu.toolchain.exposr.publisher.Publisher;
@@ -121,6 +123,20 @@ public class ExposrConfigYAML {
         }
     }
 
+    public static interface ProjectReporterYAML {
+        public ProjectReporter build();
+    }
+
+    public static class InMemoryProjectReporterYAML implements
+            ProjectReporterYAML {
+        public static final String TYPE = "!in-memory-project-reporter";
+
+        @Override
+        public ProjectReporter build() {
+            return new InMemoryProjectReporter();
+        }
+    }
+
     @Getter
     @Setter
     private ProjectManagerYAML projectManager;
@@ -136,8 +152,8 @@ public class ExposrConfigYAML {
     @Getter
     @Setter
     private BuilderYAML builder;
-
+    
     @Getter
     @Setter
-    private String target;
+    private ProjectReporterYAML projectReporter;
 }

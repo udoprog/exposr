@@ -29,6 +29,7 @@ import eu.toolchain.exposr.project.LocalRepository;
 import eu.toolchain.exposr.project.Project;
 import eu.toolchain.exposr.project.ProjectBuild;
 import eu.toolchain.exposr.project.ProjectManager;
+import eu.toolchain.exposr.project.ProjectReporter;
 import eu.toolchain.exposr.project.ProjectSync;
 import eu.toolchain.exposr.taskmanager.TaskManager;
 import eu.toolchain.exposr.taskmanager.TaskOutput;
@@ -39,6 +40,9 @@ import eu.toolchain.exposr.taskmanager.TaskSubscriber;
 public class ExposrAPI {
     @Inject
     private ProjectManager projectManager;
+
+    @Inject
+    private ProjectReporter projectReporter;
 
     @Inject
     private LocalRepository localRepository;
@@ -115,8 +119,8 @@ public class ExposrAPI {
         for (final Project project : projectManager.getProjects()) {
             final ProjectStatus status = new ProjectStatus();
             status.setName(project.getName());
-            status.setLastSync(projectManager.getLastSync(project));
-            status.setLastBuild(projectManager.getLastBuild(project));
+            status.setLastSync(projectReporter.getLastSync(project));
+            status.setLastBuild(projectReporter.getLastBuild(project));
             response.add(status);
         }
 
@@ -131,8 +135,8 @@ public class ExposrAPI {
 
         final ProjectAllStatus status = new ProjectAllStatus();
         status.setName(p.getName());
-        status.setSyncs(projectManager.getSyncs(p));
-        status.setBuilds(projectManager.getBuilds(p));
+        status.setSyncs(projectReporter.getSyncs(p));
+        status.setBuilds(projectReporter.getBuilds(p));
 
         return status;
     }

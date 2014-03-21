@@ -29,12 +29,16 @@ import com.google.inject.servlet.GuiceServletContextListener;
 
 import eu.toolchain.exposr.builder.Builder;
 import eu.toolchain.exposr.http.EmbeddedGrizzly;
+import eu.toolchain.exposr.project.InMemoryProjectReporter;
 import eu.toolchain.exposr.project.LocalRepository;
 import eu.toolchain.exposr.project.ProjectManager;
+import eu.toolchain.exposr.project.ProjectReporter;
 import eu.toolchain.exposr.publisher.Publisher;
+import eu.toolchain.exposr.taskmanager.HandleBuilder;
 import eu.toolchain.exposr.taskmanager.HandleBuilder.Handle;
 import eu.toolchain.exposr.yaml.ExposrConfigYAML;
 import eu.toolchain.exposr.yaml.ExposrConfigYAML.GithubProjectManagerYAML;
+import eu.toolchain.exposr.yaml.ExposrConfigYAML.InMemoryProjectReporterYAML;
 import eu.toolchain.exposr.yaml.ExposrConfigYAML.LocalBuilderYAML;
 import eu.toolchain.exposr.yaml.ExposrConfigYAML.LocalPublisherYAML;
 
@@ -54,6 +58,9 @@ public class Main extends GuiceServletContextListener {
                     LocalPublisherYAML.TYPE));
             addTypeDescription(new TypeDescription(LocalBuilderYAML.class,
                     LocalBuilderYAML.TYPE));
+            addTypeDescription(new TypeDescription(
+                    InMemoryProjectReporterYAML.class,
+                    InMemoryProjectReporterYAML.TYPE));
         }
     }
 
@@ -79,6 +86,13 @@ public class Main extends GuiceServletContextListener {
         final LocalRepository localRepository = config.getRepository().build();
         final Publisher publisher = config.getPublisher().build();
         final Builder builder = config.getBuilder().build();
+        final ProjectReporter projectReporter;
+
+        if (config.getProjectReporter() == null) {
+            projectReporter = new InMemoryProjectReporter();
+        } else {
+            projectReporter = config.getProjectReporter().build();
+        }
 
         modules.add(new AbstractModule() {
             @Override
@@ -87,6 +101,7 @@ public class Main extends GuiceServletContextListener {
                 bind(ProjectManager.class).toInstance(projectManager);
                 bind(Publisher.class).toInstance(publisher);
                 bind(Builder.class).toInstance(builder);
+                bind(ProjectReporter.class).toInstance(projectReporter);
                 bind(Object.class).annotatedWith(Names.named("shutdownHook"))
                         .toInstance(shutdownHook);
             }
@@ -98,17 +113,21 @@ public class Main extends GuiceServletContextListener {
 
         injector = Guice.createInjector(modules);
 
-        projectManager.refresh().callback(new Handle<Void>() {
-            @Override
-            public void done(Void value) {
-                localRepository.syncAll();
-            }
+        final HandleBuilder<Void> refresh = projectManager.refresh();
 
-            @Override
-            public void error(Throwable t) {
-                log.error("Initial refresh failed", t);
-            }
-        }).execute();
+        if (refresh != null) {
+            refresh.callback(new Handle<Void>() {
+                @Override
+                public void done(Void value) {
+                    localRepository.syncAll();
+                }
+
+                @Override
+                public void error(Throwable t) {
+                    log.error("Initial refresh failed", t);
+                }
+            }).execute();
+        }
 
         return injector;
     }

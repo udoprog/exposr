@@ -15,8 +15,6 @@ import org.yaml.snakeyaml.Yaml;
 import eu.toolchain.exposr.builder.Builder;
 import eu.toolchain.exposr.project.Project;
 import eu.toolchain.exposr.project.ProjectBuildException;
-import eu.toolchain.exposr.project.ProjectException;
-import eu.toolchain.exposr.project.ProjectManager;
 import eu.toolchain.exposr.publisher.Publisher;
 import eu.toolchain.exposr.taskmanager.Task;
 import eu.toolchain.exposr.taskmanager.TaskState;
@@ -26,16 +24,14 @@ import eu.toolchain.exposr.yaml.ExposrYAML;
 public class BuildTask implements Task<Void> {
     public static final String EXPOSR_YML = ".exposr.yml";
 
-    private final ProjectManager projectManager;
     private final Builder builder;
     private final Publisher publisher;
     private final Project project;
     private final Path buildPath;
     private static final ThreadLocal<Yaml> yamls = new ThreadLocal<Yaml>();
 
-    public BuildTask(ProjectManager projectManager, Builder builder,
+    public BuildTask(Builder builder,
             Publisher publisher, Project project, Path buildPath) {
-        this.projectManager = projectManager;
         this.builder = builder;
         this.publisher = publisher;
         this.project = project;
@@ -65,21 +61,8 @@ public class BuildTask implements Task<Void> {
 
     @Override
     public Void run(TaskState state) throws Exception {
-        log.info("Building project: " + project);
+        state.system("Building project in " + buildPath);
 
-        try {
-            buildProject(state);
-            projectManager.reportBuild(project, null);
-        } catch (ProjectException e) {
-            log.error("Failed to build project", e);
-            projectManager.reportBuild(project, e);
-            throw e;
-        }
-
-        return null;
-    }
-
-    public void buildProject(TaskState state) throws ProjectException {
         final ObjectId head = project.getHead(buildPath);
 
         final Path manifestFile = buildPath.resolve(EXPOSR_YML);
@@ -99,6 +82,7 @@ public class BuildTask implements Task<Void> {
 
         builder.execute(project, manifest, buildPath, state);
         publisher.publish(project, paths, head.name(), state);
+        return null;
     }
 
     private ExposrYAML parseManifest(final Path manifestFile)

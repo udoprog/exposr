@@ -22,6 +22,9 @@ public class LocalRepository {
     private ProjectManager projectManager;
 
     @Inject
+    private ProjectReporter projectReporter;
+
+    @Inject
     private TaskManager taskManager;
 
     @Inject
@@ -52,7 +55,7 @@ public class LocalRepository {
                         + project);
             }
 
-            projectManager.reportSync(project, result.getId().name(), null);
+            projectReporter.reportSync(project, result.getId().name(), null);
         }
 
         @Override
@@ -60,7 +63,7 @@ public class LocalRepository {
             log.warn("Not triggering build because sync resulted in failure: "
                     + project);
 
-            projectManager.reportSync(project, null, t);
+            projectReporter.reportSync(project, null, t);
         }
     }
 
@@ -73,12 +76,12 @@ public class LocalRepository {
 
         @Override
         public void done(Void value) {
-            projectManager.reportBuild(project, null);
+            projectReporter.reportBuild(project, null);
         }
 
         @Override
         public void error(Throwable t) {
-            projectManager.reportBuild(project, t);
+            projectReporter.reportBuild(project, t);
         }
     }
 
@@ -103,7 +106,7 @@ public class LocalRepository {
 
     public long build(Project project) {
         final Path buildPath = repository.resolve(project.getName());
-        final BuildTask task = new BuildTask(projectManager, builder,
+        final BuildTask task = new BuildTask(builder,
                 publisher, project, buildPath);
         return taskManager.build("build " + project, task)
                 .callback(new BuildCallback(project)).execute();

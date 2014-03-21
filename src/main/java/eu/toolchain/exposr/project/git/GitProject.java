@@ -1,4 +1,4 @@
-package eu.toolchain.exposr.project.github;
+package eu.toolchain.exposr.project.git;
 
 import java.io.IOException;
 import java.nio.file.Path;
