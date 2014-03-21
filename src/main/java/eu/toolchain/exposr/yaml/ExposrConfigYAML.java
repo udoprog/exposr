@@ -2,22 +2,36 @@ package eu.toolchain.exposr.yaml;
 
 import lombok.Getter;
 import lombok.Setter;
-
+import eu.toolchain.exposr.builder.Builder;
+import eu.toolchain.exposr.builder.LocalBuilder;
 import eu.toolchain.exposr.project.LocalRepository;
 import eu.toolchain.exposr.project.ProjectManager;
 import eu.toolchain.exposr.project.github.GithubProjectManager;
+import eu.toolchain.exposr.publisher.LocalPublisher;
+import eu.toolchain.exposr.publisher.Publisher;
 
 public class ExposrConfigYAML {
+    public static void notEmpty(String name, String string) {
+        if (string == null || string.isEmpty()) {
+            throw new RuntimeException("'" + name
+                    + "' must be defined and non-empty");
+        }
+    }
+
     public static interface ProjectManagerYAML {
         public ProjectManager build();
     }
 
     public static class GithubProjectManagerYAML implements ProjectManagerYAML {
+        public static final String TYPE = "!github-project-manager";
+
         public static interface AuthYAML {
             public GithubProjectManager.Auth build();
         }
 
         public static class BasicAuthYAML implements AuthYAML {
+            public static final String TYPE = "!basic-auth";
+
             @Getter
             @Setter
             private String username;
@@ -28,16 +42,8 @@ public class ExposrConfigYAML {
 
             @Override
             public GithubProjectManager.Auth build() {
-                if (username == null || username.isEmpty()) {
-                    throw new RuntimeException(
-                            "'username' must be defined and non-empty");
-                }
-
-                if (password == null || password.isEmpty()) {
-                    throw new RuntimeException(
-                            "'username' must be defined and non-empty");
-                }
-
+                notEmpty("projectManager.auth.username", username);
+                notEmpty("projectManager.auth.password", password);
                 return new GithubProjectManager.BasicAuth(username, password);
             }
         }
@@ -60,11 +66,7 @@ public class ExposrConfigYAML {
 
         @Override
         public ProjectManager build() {
-            if (user == null || user.isEmpty()) {
-                throw new RuntimeException(
-                        "'user' must be defined and non-empty");
-            }
-
+            notEmpty("projectManager.user", user);
             final GithubProjectManager.Auth auth;
 
             if (this.auth != null) {
@@ -82,22 +84,40 @@ public class ExposrConfigYAML {
         @Setter
         private String path;
 
+        public LocalRepository build() {
+            notEmpty("repository.path", path);
+            return new LocalRepository(path);
+        }
+    }
+
+    public static interface PublisherYAML {
+        public Publisher build();
+    }
+
+    public static class LocalPublisherYAML implements PublisherYAML {
+        public static final String TYPE = "!local-publisher";
+
         @Getter
         @Setter
-        private String publish;
+        private String path;
 
-        public LocalRepository build() {
-            if (path == null || path.isEmpty()) {
-                throw new RuntimeException(
-                        "'path' must be defined and non-empty");
-            }
+        @Override
+        public Publisher build() {
+            notEmpty("publisher.path", path);
+            return new LocalPublisher(path);
+        }
+    }
 
-            if (publish == null || publish.isEmpty()) {
-                throw new RuntimeException(
-                        "'publish' must be defined and non-empty");
-            }
+    public static interface BuilderYAML {
+        public Builder build();
+    }
 
-            return new LocalRepository(path, publish);
+    public static class LocalBuilderYAML implements BuilderYAML {
+        public static final String TYPE = "!local-builder";
+
+        @Override
+        public Builder build() {
+            return new LocalBuilder();
         }
     }
 
@@ -108,6 +128,14 @@ public class ExposrConfigYAML {
     @Getter
     @Setter
     private RepositoryYAML repository;
+
+    @Getter
+    @Setter
+    private PublisherYAML publisher;
+
+    @Getter
+    @Setter
+    private BuilderYAML builder;
 
     @Getter
     @Setter

@@ -26,12 +26,17 @@ import com.google.inject.Injector;
 import com.google.inject.Module;
 import com.google.inject.name.Names;
 import com.google.inject.servlet.GuiceServletContextListener;
+
+import eu.toolchain.exposr.builder.Builder;
 import eu.toolchain.exposr.http.EmbeddedGrizzly;
 import eu.toolchain.exposr.project.LocalRepository;
 import eu.toolchain.exposr.project.ProjectManager;
+import eu.toolchain.exposr.publisher.Publisher;
 import eu.toolchain.exposr.taskmanager.HandleBuilder.Handle;
 import eu.toolchain.exposr.yaml.ExposrConfigYAML;
 import eu.toolchain.exposr.yaml.ExposrConfigYAML.GithubProjectManagerYAML;
+import eu.toolchain.exposr.yaml.ExposrConfigYAML.LocalBuilderYAML;
+import eu.toolchain.exposr.yaml.ExposrConfigYAML.LocalPublisherYAML;
 
 @Slf4j
 public class Main extends GuiceServletContextListener {
@@ -40,9 +45,15 @@ public class Main extends GuiceServletContextListener {
     private static final class CustomConstructor extends Constructor {
         public CustomConstructor() {
             addTypeDescription(new TypeDescription(
-                    GithubProjectManagerYAML.class, "!github"));
+                    GithubProjectManagerYAML.class,
+                    GithubProjectManagerYAML.TYPE));
             addTypeDescription(new TypeDescription(
-                    GithubProjectManagerYAML.BasicAuthYAML.class, "!basic-auth"));
+                    GithubProjectManagerYAML.BasicAuthYAML.class,
+                    GithubProjectManagerYAML.BasicAuthYAML.TYPE));
+            addTypeDescription(new TypeDescription(LocalPublisherYAML.class,
+                    LocalPublisherYAML.TYPE));
+            addTypeDescription(new TypeDescription(LocalBuilderYAML.class,
+                    LocalBuilderYAML.TYPE));
         }
     }
 
@@ -66,12 +77,16 @@ public class Main extends GuiceServletContextListener {
         final ProjectManager projectManager = config.getProjectManager()
                 .build();
         final LocalRepository localRepository = config.getRepository().build();
+        final Publisher publisher = config.getPublisher().build();
+        final Builder builder = config.getBuilder().build();
 
         modules.add(new AbstractModule() {
             @Override
             protected void configure() {
                 bind(LocalRepository.class).toInstance(localRepository);
                 bind(ProjectManager.class).toInstance(projectManager);
+                bind(Publisher.class).toInstance(publisher);
+                bind(Builder.class).toInstance(builder);
                 bind(Object.class).annotatedWith(Names.named("shutdownHook"))
                         .toInstance(shutdownHook);
             }

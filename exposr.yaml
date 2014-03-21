@@ -1,5 +1,7 @@
+# vim: sw=2 tabstop=2
+
 projectManager:
-  !github
+  !github-project-manager
   apiUrl: https://api.github.com
   user: udoprog
 #  auth:
@@ -9,4 +11,10 @@ projectManager:
 
 repository:
   path: /home/udoprog/temp/repos
-  publish: /home/udoprog/temp/publish
+
+builder:
+  !local-builder {}
+
+publisher:
+  !local-publisher
+  path: /home/udoprog/temp/publish

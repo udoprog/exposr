@@ -8,7 +8,8 @@ import java.util.List;
 import javax.inject.Inject;
 
 import lombok.extern.slf4j.Slf4j;
-
+import eu.toolchain.exposr.builder.Builder;
+import eu.toolchain.exposr.publisher.Publisher;
 import eu.toolchain.exposr.taskmanager.HandleBuilder.Handle;
 import eu.toolchain.exposr.taskmanager.TaskManager;
 import eu.toolchain.exposr.tasks.BuildTask;
@@ -23,12 +24,16 @@ public class LocalRepository {
     @Inject
     private TaskManager taskManager;
 
-    private final Path repository;
-    private final Path deployPath;
+    @Inject
+    private Builder builder;
 
-    public LocalRepository(String repository, String deploy) {
+    @Inject
+    private Publisher publisher;
+
+    private final Path repository;
+
+    public LocalRepository(String repository) {
         this.repository = Paths.get(repository);
-        this.deployPath = Paths.get(deploy);
     }
 
     private final class SyncCallback implements Handle<SyncResult> {
@@ -98,8 +103,8 @@ public class LocalRepository {
 
     public long build(Project project) {
         final Path buildPath = repository.resolve(project.getName());
-        final BuildTask task = new BuildTask(projectManager, project,
-                buildPath, deployPath);
+        final BuildTask task = new BuildTask(projectManager, builder,
+                publisher, project, buildPath);
         return taskManager.build("build " + project, task)
                 .callback(new BuildCallback(project)).execute();
     }
