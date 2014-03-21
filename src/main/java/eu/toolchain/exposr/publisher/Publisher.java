@@ -4,7 +4,6 @@ import java.nio.file.Path;
 import java.util.List;
 
 import eu.toolchain.exposr.project.Project;
-import eu.toolchain.exposr.project.ProjectPublishException;
 import eu.toolchain.exposr.taskmanager.TaskState;
 
 public interface Publisher {

@@ -1,22 +1,15 @@
-package eu.toolchain.exposr.project.git;
+package eu.toolchain.exposr.project.manager;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import eu.toolchain.exposr.project.Project;
-import eu.toolchain.exposr.project.ProjectManager;
-import eu.toolchain.exposr.taskmanager.HandleBuilder;
 
-public class GitProjectManager implements ProjectManager {
+public class StaticProjectManager implements ProjectManager {
     private List<Project> projects = new ArrayList<Project>();
 
-    public GitProjectManager(List<Project> projects) {
+    public StaticProjectManager(List<Project> projects) {
         this.projects = projects;
-    }
-
-    @Override
-    public HandleBuilder<Void> refresh() {
-        return null;
     }
 
     @Override

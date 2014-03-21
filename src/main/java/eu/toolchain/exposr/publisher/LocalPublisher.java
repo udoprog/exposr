@@ -12,7 +12,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 
 import eu.toolchain.exposr.project.Project;
-import eu.toolchain.exposr.project.ProjectPublishException;
 import eu.toolchain.exposr.taskmanager.TaskState;
 
 @Slf4j

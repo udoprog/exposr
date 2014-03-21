@@ -8,24 +8,17 @@ import org.quartz.Job;
 import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
 
-import eu.toolchain.exposr.project.ProjectManager;
-import eu.toolchain.exposr.taskmanager.HandleBuilder;
+import eu.toolchain.exposr.project.manager.RefreshableProjectManager;
 
 @Slf4j
 public class RefreshProjectManagerJob implements Job {
     @Inject
-    private ProjectManager projectManager;
+    private RefreshableProjectManager projectManager;
 
     @Override
     public void execute(JobExecutionContext context)
             throws JobExecutionException {
         log.info("Refreshing Project Manager");
-        final HandleBuilder<Void> refresh = projectManager.refresh();
-        
-        if (refresh == null) {
-            return;
-        }
-
-        refresh.execute();
+        projectManager.refresh().execute();
     }
 }

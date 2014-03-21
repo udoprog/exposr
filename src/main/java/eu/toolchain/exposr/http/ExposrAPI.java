@@ -25,12 +25,12 @@ import org.glassfish.jersey.media.sse.EventOutput;
 import org.glassfish.jersey.media.sse.OutboundEvent;
 import org.glassfish.jersey.media.sse.SseFeature;
 
-import eu.toolchain.exposr.project.LocalRepository;
 import eu.toolchain.exposr.project.Project;
-import eu.toolchain.exposr.project.ProjectBuild;
-import eu.toolchain.exposr.project.ProjectManager;
-import eu.toolchain.exposr.project.ProjectReporter;
-import eu.toolchain.exposr.project.ProjectSync;
+import eu.toolchain.exposr.project.manager.ProjectManager;
+import eu.toolchain.exposr.project.reporter.ProjectBuild;
+import eu.toolchain.exposr.project.reporter.ProjectReporter;
+import eu.toolchain.exposr.project.reporter.ProjectSync;
+import eu.toolchain.exposr.repository.Repository;
 import eu.toolchain.exposr.taskmanager.TaskManager;
 import eu.toolchain.exposr.taskmanager.TaskOutput;
 import eu.toolchain.exposr.taskmanager.TaskSnapshot;
@@ -45,7 +45,7 @@ public class ExposrAPI {
     private ProjectReporter projectReporter;
 
     @Inject
-    private LocalRepository localRepository;
+    private Repository localRepository;
 
     @Inject
     private TaskManager taskManager;

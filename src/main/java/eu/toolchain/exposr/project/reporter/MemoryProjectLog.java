@@ -1,11 +1,13 @@
-package eu.toolchain.exposr.project;
+package eu.toolchain.exposr.project.reporter;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class ProjectLog<T> {
+import eu.toolchain.exposr.project.Project;
+
+public class MemoryProjectLog<T> {
     private final Map<Project, List<T>> items = new HashMap<Project, List<T>>();
 
     public synchronized void append(Project project, T item) {

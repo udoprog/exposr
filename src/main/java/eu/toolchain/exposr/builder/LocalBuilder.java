@@ -6,7 +6,6 @@ import java.nio.file.Path;
 
 import lombok.extern.slf4j.Slf4j;
 import eu.toolchain.exposr.project.Project;
-import eu.toolchain.exposr.project.ProjectBuildException;
 import eu.toolchain.exposr.taskmanager.StreamReader;
 import eu.toolchain.exposr.taskmanager.TaskState;
 import eu.toolchain.exposr.yaml.ExposrYAML;

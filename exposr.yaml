@@ -1,15 +1,21 @@
 # vim: sw=2 tabstop=2
 
 projectManager:
-  !github-project-manager
-  apiUrl: https://api.github.com
-  user: udoprog
+#  !github-project-manager
+#  apiUrl: https://api.github.com
+#  user: udoprog
 #  auth:
 #    !basic-auth
-#     username: user
-#     password: password
+#    username: user
+#    password: password
+  !static-project-manager
+  projects:
+    - name: puppet
+      url: https://github.com/puppetlabs/puppet
+      ref: HEAD
 
 repository:
+  !local-repository
   path: /home/udoprog/temp/repos
 
 builder:

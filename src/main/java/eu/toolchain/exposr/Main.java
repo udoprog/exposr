@@ -24,23 +24,30 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Module;
+import com.google.inject.Scopes;
 import com.google.inject.name.Names;
 import com.google.inject.servlet.GuiceServletContextListener;
 
 import eu.toolchain.exposr.builder.Builder;
+import eu.toolchain.exposr.builder.LocalBuilderYAML;
 import eu.toolchain.exposr.http.EmbeddedGrizzly;
-import eu.toolchain.exposr.project.InMemoryProjectReporter;
-import eu.toolchain.exposr.project.LocalRepository;
-import eu.toolchain.exposr.project.ProjectManager;
-import eu.toolchain.exposr.project.ProjectReporter;
+import eu.toolchain.exposr.project.BasicProjectAuthYAML;
+import eu.toolchain.exposr.project.manager.GithubProjectManagerYAML;
+import eu.toolchain.exposr.project.manager.ProjectManager;
+import eu.toolchain.exposr.project.manager.RefreshableProjectManager;
+import eu.toolchain.exposr.project.manager.StaticProjectManagerYAML;
+import eu.toolchain.exposr.project.reporter.MemoryProjectReporterYAML;
+import eu.toolchain.exposr.project.reporter.ProjectReporter;
+import eu.toolchain.exposr.publisher.LocalPublisherYAML;
 import eu.toolchain.exposr.publisher.Publisher;
+import eu.toolchain.exposr.repository.LocalRepositoryYAML;
+import eu.toolchain.exposr.repository.Repository;
+import eu.toolchain.exposr.taskmanager.DefaultTaskManager;
 import eu.toolchain.exposr.taskmanager.HandleBuilder;
 import eu.toolchain.exposr.taskmanager.HandleBuilder.Handle;
+import eu.toolchain.exposr.taskmanager.TaskManager;
+import eu.toolchain.exposr.yaml.ExposrConfig;
 import eu.toolchain.exposr.yaml.ExposrConfigYAML;
-import eu.toolchain.exposr.yaml.ExposrConfigYAML.GithubProjectManagerYAML;
-import eu.toolchain.exposr.yaml.ExposrConfigYAML.InMemoryProjectReporterYAML;
-import eu.toolchain.exposr.yaml.ExposrConfigYAML.LocalBuilderYAML;
-import eu.toolchain.exposr.yaml.ExposrConfigYAML.LocalPublisherYAML;
 
 @Slf4j
 public class Main extends GuiceServletContextListener {
@@ -52,20 +59,24 @@ public class Main extends GuiceServletContextListener {
                     GithubProjectManagerYAML.class,
                     GithubProjectManagerYAML.TYPE));
             addTypeDescription(new TypeDescription(
-                    GithubProjectManagerYAML.BasicAuthYAML.class,
-                    GithubProjectManagerYAML.BasicAuthYAML.TYPE));
+                    StaticProjectManagerYAML.class,
+                    StaticProjectManagerYAML.TYPE));
+            addTypeDescription(new TypeDescription(LocalRepositoryYAML.class,
+                    LocalRepositoryYAML.TYPE));
+            addTypeDescription(new TypeDescription(BasicProjectAuthYAML.class,
+                    BasicProjectAuthYAML.TYPE));
             addTypeDescription(new TypeDescription(LocalPublisherYAML.class,
                     LocalPublisherYAML.TYPE));
             addTypeDescription(new TypeDescription(LocalBuilderYAML.class,
                     LocalBuilderYAML.TYPE));
             addTypeDescription(new TypeDescription(
-                    InMemoryProjectReporterYAML.class,
-                    InMemoryProjectReporterYAML.TYPE));
+                    MemoryProjectReporterYAML.class,
+                    MemoryProjectReporterYAML.TYPE));
         }
     }
 
     public static Injector injector;
-    private static ExposrConfigYAML config;
+    private static ExposrConfig config;
     private static final Object shutdownHook = new Object();
 
     @Override
@@ -74,59 +85,51 @@ public class Main extends GuiceServletContextListener {
 
         final List<Module> modules = new ArrayList<Module>();
 
-        if (config.getProjectManager() == null) {
-            throw new RuntimeException(
-                    "No 'projectManager' specified in configuration");
-        }
-
         final SchedulerModule.Config schedulerConfig = new SchedulerModule.Config();
-
-        final ProjectManager projectManager = config.getProjectManager()
-                .build();
-        final LocalRepository localRepository = config.getRepository().build();
-        final Publisher publisher = config.getPublisher().build();
-        final Builder builder = config.getBuilder().build();
-        final ProjectReporter projectReporter;
-
-        if (config.getProjectReporter() == null) {
-            projectReporter = new InMemoryProjectReporter();
-        } else {
-            projectReporter = config.getProjectReporter().build();
-        }
 
         modules.add(new AbstractModule() {
             @Override
             protected void configure() {
-                bind(LocalRepository.class).toInstance(localRepository);
-                bind(ProjectManager.class).toInstance(projectManager);
-                bind(Publisher.class).toInstance(publisher);
-                bind(Builder.class).toInstance(builder);
-                bind(ProjectReporter.class).toInstance(projectReporter);
+                bind(Repository.class).toInstance(config.getRepository());
+                bind(ProjectManager.class).toInstance(
+                        config.getProjectManager());
+                bind(Publisher.class).toInstance(config.getPublisher());
+                bind(Builder.class).toInstance(config.getBuilder());
+                bind(ProjectReporter.class).toInstance(
+                        config.getProjectReporter());
                 bind(Object.class).annotatedWith(Names.named("shutdownHook"))
                         .toInstance(shutdownHook);
+                bind(TaskManager.class).to(DefaultTaskManager.class).in(
+                        Scopes.SINGLETON);
             }
         });
-        modules.add(new SchedulerModule(schedulerConfig));
-        modules.add(new ProjectModule(projectManager));
-        modules.add(new TaskManagerModule());
-        modules.add(new ProjectModule(projectManager));
+        modules.add(new SchedulerModule(schedulerConfig, config
+                .getProjectManager() instanceof RefreshableProjectManager));
 
         injector = Guice.createInjector(modules);
 
-        final HandleBuilder<Void> refresh = projectManager.refresh();
+        final ProjectManager projectManager = config.getProjectManager();
+        final Repository repository = config.getRepository();
 
-        if (refresh != null) {
-            refresh.callback(new Handle<Void>() {
-                @Override
-                public void done(Void value) {
-                    localRepository.syncAll();
-                }
-
-                @Override
-                public void error(Throwable t) {
-                    log.error("Initial refresh failed", t);
-                }
-            }).execute();
+        if (projectManager instanceof RefreshableProjectManager) {
+            final HandleBuilder<Void> refresh = RefreshableProjectManager.class
+                    .cast(projectManager).refresh();
+    
+            if (refresh != null) {
+                refresh.callback(new Handle<Void>() {
+                    @Override
+                    public void done(Void value) {
+                        repository.syncAll();
+                    }
+    
+                    @Override
+                    public void error(Throwable t) {
+                        log.error("Initial refresh failed", t);
+                    }
+                }).execute();
+            }
+        } else {
+            repository.syncAll();
         }
 
         return injector;
@@ -145,14 +148,18 @@ public class Main extends GuiceServletContextListener {
 
         final File configFile = new File(configPath);
 
+        final ExposrConfigYAML configYaml;
+
         try {
-            config = yaml.loadAs(new FileInputStream(configFile),
+            configYaml = yaml.loadAs(new FileInputStream(configFile),
                     ExposrConfigYAML.class);
         } catch (FileNotFoundException e) {
             log.error("Failed to read configuration", e);
             System.exit(1);
             return;
         }
+
+        config = configYaml.build();
 
         final EmbeddedGrizzly grizzlyServer = new EmbeddedGrizzly();
         final HttpServer server;

@@ -5,11 +5,12 @@ import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
 
 import javax.inject.Inject;
-import eu.toolchain.exposr.project.LocalRepository;
+
+import eu.toolchain.exposr.repository.Repository;
 
 public class SyncRemotesJob implements Job {
     @Inject
-    private LocalRepository localRepository;
+    private Repository localRepository;
 
     @Override
     public void execute(JobExecutionContext context)

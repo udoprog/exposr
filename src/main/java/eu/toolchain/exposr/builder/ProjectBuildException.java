@@ -1,4 +1,6 @@
-package eu.toolchain.exposr.project;
+package eu.toolchain.exposr.builder;
+
+import eu.toolchain.exposr.project.ProjectException;
 
 public class ProjectBuildException extends ProjectException {
     private static final long serialVersionUID = 928760680376698555L;

@@ -1,4 +1,5 @@
-package eu.toolchain.exposr.project;
+package eu.toolchain.exposr.repository;
+
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -9,6 +10,9 @@ import javax.inject.Inject;
 
 import lombok.extern.slf4j.Slf4j;
 import eu.toolchain.exposr.builder.Builder;
+import eu.toolchain.exposr.project.Project;
+import eu.toolchain.exposr.project.manager.ProjectManager;
+import eu.toolchain.exposr.project.reporter.ProjectReporter;
 import eu.toolchain.exposr.publisher.Publisher;
 import eu.toolchain.exposr.taskmanager.HandleBuilder.Handle;
 import eu.toolchain.exposr.taskmanager.TaskManager;
@@ -17,7 +21,7 @@ import eu.toolchain.exposr.tasks.SyncTask;
 import eu.toolchain.exposr.tasks.SyncTask.SyncResult;
 
 @Slf4j
-public class LocalRepository {
+public class LocalRepository implements Repository {
     @Inject
     private ProjectManager projectManager;
 
@@ -106,8 +110,8 @@ public class LocalRepository {
 
     public long build(Project project) {
         final Path buildPath = repository.resolve(project.getName());
-        final BuildTask task = new BuildTask(builder,
-                publisher, project, buildPath);
+        final BuildTask task = new BuildTask(builder, publisher, project,
+                buildPath);
         return taskManager.build("build " + project, task)
                 .callback(new BuildCallback(project)).execute();
     }

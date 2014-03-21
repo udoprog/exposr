@@ -13,8 +13,8 @@ import org.eclipse.jgit.lib.ObjectId;
 import org.yaml.snakeyaml.Yaml;
 
 import eu.toolchain.exposr.builder.Builder;
+import eu.toolchain.exposr.builder.ProjectBuildException;
 import eu.toolchain.exposr.project.Project;
-import eu.toolchain.exposr.project.ProjectBuildException;
 import eu.toolchain.exposr.publisher.Publisher;
 import eu.toolchain.exposr.taskmanager.Task;
 import eu.toolchain.exposr.taskmanager.TaskState;

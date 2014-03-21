@@ -1,12 +1,10 @@
-package eu.toolchain.exposr.project;
+package eu.toolchain.exposr.project.manager;
 
 import java.util.List;
 
-import eu.toolchain.exposr.taskmanager.HandleBuilder;
+import eu.toolchain.exposr.project.Project;
 
 public interface ProjectManager {
-    public HandleBuilder<Void> refresh();
-
     public List<Project> getProjects();
 
     public Project getProjectByName(String name);

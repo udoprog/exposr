@@ -3,157 +3,81 @@ package eu.toolchain.exposr.yaml;
 import lombok.Getter;
 import lombok.Setter;
 import eu.toolchain.exposr.builder.Builder;
+import eu.toolchain.exposr.builder.BuilderYAML;
 import eu.toolchain.exposr.builder.LocalBuilder;
-import eu.toolchain.exposr.project.InMemoryProjectReporter;
-import eu.toolchain.exposr.project.LocalRepository;
-import eu.toolchain.exposr.project.ProjectManager;
-import eu.toolchain.exposr.project.ProjectReporter;
-import eu.toolchain.exposr.project.github.GithubProjectManager;
-import eu.toolchain.exposr.publisher.LocalPublisher;
+import eu.toolchain.exposr.project.manager.ProjectManager;
+import eu.toolchain.exposr.project.manager.ProjectManagerYAML;
+import eu.toolchain.exposr.project.reporter.MemoryProjectReporter;
+import eu.toolchain.exposr.project.reporter.ProjectReporter;
+import eu.toolchain.exposr.project.reporter.ProjectReporterYAML;
 import eu.toolchain.exposr.publisher.Publisher;
+import eu.toolchain.exposr.publisher.PublisherYAML;
+import eu.toolchain.exposr.repository.Repository;
+import eu.toolchain.exposr.repository.RepositoryYAML;
 
 public class ExposrConfigYAML {
-    public static void notEmpty(String name, String string) {
-        if (string == null || string.isEmpty()) {
-            throw new RuntimeException("'" + name
-                    + "' must be defined and non-empty");
-        }
-    }
-
-    public static interface ProjectManagerYAML {
-        public ProjectManager build();
-    }
-
-    public static class GithubProjectManagerYAML implements ProjectManagerYAML {
-        public static final String TYPE = "!github-project-manager";
-
-        public static interface AuthYAML {
-            public GithubProjectManager.Auth build();
-        }
-
-        public static class BasicAuthYAML implements AuthYAML {
-            public static final String TYPE = "!basic-auth";
-
-            @Getter
-            @Setter
-            private String username;
-
-            @Getter
-            @Setter
-            private String password;
-
-            @Override
-            public GithubProjectManager.Auth build() {
-                notEmpty("projectManager.auth.username", username);
-                notEmpty("projectManager.auth.password", password);
-                return new GithubProjectManager.BasicAuth(username, password);
-            }
-        }
-
-        @Getter
-        @Setter
-        private String apiUrl = "https://api.github.com";
-
-        @Getter
-        @Setter
-        private String ref = "refs/heads/master";
-
-        @Getter
-        @Setter
-        private String user;
-
-        @Getter
-        @Setter
-        private AuthYAML auth;
-
-        @Override
-        public ProjectManager build() {
-            notEmpty("projectManager.user", user);
-            final GithubProjectManager.Auth auth;
-
-            if (this.auth != null) {
-                auth = this.auth.build();
-            } else {
-                auth = null;
-            }
-
-            return new GithubProjectManager(apiUrl, user, ref, auth);
-        }
-    }
-
-    public static class RepositoryYAML {
-        @Getter
-        @Setter
-        private String path;
-
-        public LocalRepository build() {
-            notEmpty("repository.path", path);
-            return new LocalRepository(path);
-        }
-    }
-
-    public static interface PublisherYAML {
-        public Publisher build();
-    }
-
-    public static class LocalPublisherYAML implements PublisherYAML {
-        public static final String TYPE = "!local-publisher";
-
-        @Getter
-        @Setter
-        private String path;
-
-        @Override
-        public Publisher build() {
-            notEmpty("publisher.path", path);
-            return new LocalPublisher(path);
-        }
-    }
-
-    public static interface BuilderYAML {
-        public Builder build();
-    }
-
-    public static class LocalBuilderYAML implements BuilderYAML {
-        public static final String TYPE = "!local-builder";
-
-        @Override
-        public Builder build() {
-            return new LocalBuilder();
-        }
-    }
-
-    public static interface ProjectReporterYAML {
-        public ProjectReporter build();
-    }
-
-    public static class InMemoryProjectReporterYAML implements
-            ProjectReporterYAML {
-        public static final String TYPE = "!in-memory-project-reporter";
-
-        @Override
-        public ProjectReporter build() {
-            return new InMemoryProjectReporter();
-        }
-    }
-
     @Getter
     @Setter
     private ProjectManagerYAML projectManager;
+
+    public ProjectManager setupProjectManager() {
+        if (projectManager == null)
+            throw new RuntimeException("'projectManager' must be defined");
+
+        return projectManager.build("projectManager");
+    }
 
     @Getter
     @Setter
     private RepositoryYAML repository;
 
+    public Repository setupRepository() {
+        if (repository == null)
+            throw new RuntimeException("'repository' must be defined");
+
+        return repository.build("repository");
+    }
+
     @Getter
     @Setter
     private PublisherYAML publisher;
 
+    public Publisher setupPublisher() {
+        if (publisher == null)
+            throw new RuntimeException("'publisher' must be defined");
+
+        return publisher.build("publisher");
+    }
+
     @Getter
     @Setter
     private BuilderYAML builder;
+
+    public Builder setupBuilder() {
+        if (builder == null)
+            return new LocalBuilder();
+
+        return builder.build("builder");
+    }
     
     @Getter
     @Setter
     private ProjectReporterYAML projectReporter;
+
+    public ProjectReporter setupProjectReporter() {
+        if (projectReporter == null)
+            return new MemoryProjectReporter();
+
+        return projectReporter.build("projectReporter");
+    }
+
+    public ExposrConfig build() {
+        final ExposrConfig config = new ExposrConfig();
+        config.setProjectManager(setupProjectManager());
+        config.setRepository(setupRepository());
+        config.setPublisher(setupPublisher());
+        config.setBuilder(setupBuilder());
+        config.setProjectReporter(setupProjectReporter());
+        return config;
+    }
 }

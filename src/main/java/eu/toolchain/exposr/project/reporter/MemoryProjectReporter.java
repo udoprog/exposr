@@ -1,11 +1,13 @@
-package eu.toolchain.exposr.project;
+package eu.toolchain.exposr.project.reporter;
 
 import java.util.Date;
 import java.util.List;
 
-public class InMemoryProjectReporter implements ProjectReporter {
-    private final ProjectLog<ProjectSync> syncs = new ProjectLog<ProjectSync>();
-    private final ProjectLog<ProjectBuild> builds = new ProjectLog<ProjectBuild>();
+import eu.toolchain.exposr.project.Project;
+
+public class MemoryProjectReporter implements ProjectReporter {
+    private final MemoryProjectLog<ProjectSync> syncs = new MemoryProjectLog<ProjectSync>();
+    private final MemoryProjectLog<ProjectBuild> builds = new MemoryProjectLog<ProjectBuild>();
 
     @Override
     public void reportSync(Project project, String id, Throwable error) {
