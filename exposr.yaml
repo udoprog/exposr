@@ -1,0 +1,12 @@
+projectManager:
+  !github
+  apiUrl: https://api.github.com
+  user: udoprog
+#  auth:
+#    !basic-auth
+#     username: user
+#     password: password
+
+repository:
+  path: /home/udoprog/temp/repos
+  publish: /home/udoprog/temp/publish

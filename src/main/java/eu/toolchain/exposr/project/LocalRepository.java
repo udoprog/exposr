@@ -1,0 +1,118 @@
+package eu.toolchain.exposr.project;
+
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.inject.Inject;
+
+import lombok.extern.slf4j.Slf4j;
+
+import eu.toolchain.exposr.taskmanager.HandleBuilder.Handle;
+import eu.toolchain.exposr.taskmanager.TaskManager;
+import eu.toolchain.exposr.tasks.BuildTask;
+import eu.toolchain.exposr.tasks.SyncTask;
+import eu.toolchain.exposr.tasks.SyncTask.SyncResult;
+
+@Slf4j
+public class LocalRepository {
+    @Inject
+    private ProjectManager projectManager;
+
+    @Inject
+    private TaskManager taskManager;
+
+    private final Path repository;
+    private final Path deployPath;
+
+    public LocalRepository(String repository, String deploy) {
+        this.repository = Paths.get(repository);
+        this.deployPath = Paths.get(deploy);
+    }
+
+    private final class SyncCallback implements Handle<SyncResult> {
+        private final Project project;
+
+        public SyncCallback(Project project) {
+            this.project = project;
+        }
+
+        @Override
+        public void done(SyncResult result) {
+            if (result.isUpdated()) {
+                build(project);
+            } else {
+                log.info("Not building since project has not been updated: "
+                        + project);
+            }
+
+            projectManager.reportSync(project, result.getId().name(), null);
+        }
+
+        @Override
+        public void error(Throwable t) {
+            log.warn("Not triggering build because sync resulted in failure: "
+                    + project);
+
+            projectManager.reportSync(project, null, t);
+        }
+    }
+
+    private final class BuildCallback implements Handle<Void> {
+        private final Project project;
+
+        public BuildCallback(Project project) {
+            this.project = project;
+        }
+
+        @Override
+        public void done(Void value) {
+            projectManager.reportBuild(project, null);
+        }
+
+        @Override
+        public void error(Throwable t) {
+            projectManager.reportBuild(project, t);
+        }
+    }
+
+    public long sync(final Project project) {
+        final Path buildPath = repository.resolve(project.getName());
+        final SyncTask task = new SyncTask(project, buildPath);
+        return taskManager.build("synchronize " + project, task)
+                .callback(new SyncCallback(project)).execute();
+    }
+
+    public List<Long> syncAll() {
+        log.info("Syncronizing All Projects");
+
+        final List<Long> taskIds = new ArrayList<Long>();
+
+        for (final Project project : projectManager.getProjects()) {
+            taskIds.add(sync(project));
+        }
+
+        return taskIds;
+    }
+
+    public long build(Project project) {
+        final Path buildPath = repository.resolve(project.getName());
+        final BuildTask task = new BuildTask(projectManager, project,
+                buildPath, deployPath);
+        return taskManager.build("build " + project, task)
+                .callback(new BuildCallback(project)).execute();
+    }
+
+    public List<Long> buildAll() {
+        log.info("Building All Projects");
+
+        final List<Long> taskIds = new ArrayList<Long>();
+
+        for (final Project project : projectManager.getProjects()) {
+            taskIds.add(build(project));
+        }
+
+        return taskIds;
+    }
+}
