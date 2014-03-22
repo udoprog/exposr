@@ -1,11 +1,10 @@
 # Exposr
 
-Dirt simple build and deployments.
+Dirt simple building and deployments using *strong convention* over configuration.
 
 # Usage
 
-Exposr was primarily built to integrate as a very simple, convention-first
-build system for Github and plain old git.
+Exposr was primarily built to integrate as a very simple build system for github.
 
 It features a rich RESTful API which gives the user complete control while the
 system is running.
@@ -15,15 +14,15 @@ GitHub API to discover all available repos and registers them with the project.
 
 Any updates will then be built and published by Exposr.
 
-See the bundled [exposr.yaml](/exposr.yaml) file for available configuration
-options.
+See the bundled [exposr.yaml](/exposr.yaml) file for an example configuration, or the [Service Configuration](#Server Configuration) section for more detailed documentation.
 
-# Building with .exposr.yml
+# Building
 
-Exposr looks for an .exposr.yml file in the repository.
-This file contains instructions for which commands Exposr should run.
+Exposr looks for a file named **.exposr.yml** in the root of your repository.
 
-The following is a simple example.
+This file contains instructions for which commands Exposr should run and what should be published after these has been executed.
+
+The following is an example **.exposr.yml** file.
 
 ```yaml
 commands:
@@ -33,124 +32,131 @@ publish:
   - build
 ```
 
-This instructs the builder to execute **scripts/build** and publish everything that
+The above instructs the builder to execute **scripts/build** and publish everything that
 exists in the **build** directory.
 
-The published artifacts will have a **project-name** and **id**.
-This constitues a deployment and will govern certain aspects of the publishing step.
+The published artifacts will have a *project-name* and an *id* associated with them.
+The exact detail of what this means differs between project managers.
+Each *project-name* can only have one *id* deployed at a time.
+This combination constitutes a *deployment*.
 
-For example, with the **!local-publisher**.
+###### Example when using the [static-project-manager](#static-project-manager) and the [local-publisher](#local-publisher) components
 
-* The **project-name** will be used as the root directory where everything is copied.
-* The **id** will be used to discriminate *unique* deployments, two deployments
-  of the same id will overwrite each other.
+The **project-name** will be used as the root directory where everything is published and is statically configured in the **projectManager** section of the service configuration.
 
-The exact builder being used is determined by the Exposr configuration and the
-server it is running on.
+The **id** will be used to discriminate *unique* deployments and will be the current commit id of the ref configuration in the **projectManager** section.
 
-# Components and Configuration
+Two deployments of the same id will not co-exist and will overwrite each other depending on which order they were published.
+
+# Service Configuration
 
 The Exposr service is built up into multiple components.
-Each follow a specific structure in the configuration files.
-For an example, see the [exposr.yml](/exposr.yml) file.
+Each follow a specific structure in the configuration file.
 
-The root components are.
+For a complete example, see the [exposr.yaml](/exposr.yaml) example configuration.
 
-* **projectManager (require)**
-* **repository (required)**
-* **publisher (required)**
-* **builder (optional, defaults to local-builder)**
-* **projectReporter (optional, defaults to memory-project-reporter)**
+The available root configuration keys are.
 
-## Authentication Methods
-### Basic Authentication
+* [**projectManager**](#Project Manager) &mdash; **required**
+  * [static-project-manager](#static-project-manager)
+  * [github-project-manager](#github-project-manager)
+* [**repository**](#Repository) &mdash; **required**
+  * [local-repository](#local-repository)
+* [**publisher**](#Publisher) &mdash; **required**
+  * [local-publisher](#local-publisher)
+  * [remote-publisher](#remote-publisher)
+* [**builder**](#Builder) &mdash; **optional**, defaults to **local-builder**.
+  * [local-builder](#local-builder)
+* [**projectReporter**](#Project Reporter) &mdash; **optional**, defaults to **memory-project-reporter**.
+  * [memory-project-reporter](#memory-project-reporter)
+
+#### Project Manager
+Key: **projectManager**
+
+Is responsible for discovering new projects.
+
+Typically contacts external services in order to retrieve a list of projects matching the configured criteria.
+
+The simplest project manager **static-project-manager** takes a static list of configuration.
+
+##### static-project-manager:
+
+**project-name** &mdash; *Statically configured*<br />
+**id** &mdash; The commit hash of the ref specified.
 
 ```yaml
-# Authenticate using a username and password combination.
+!static-project-manager
+# Shared authentication method for all specified projects.
+auth: ...
+# List of projects to use.
+projects:
+  - # Project specific authentication method.
+    # See the Authentication section for more details.
+    auth: ...
+    # Project name.
+    name: puppet
+    # Remote URL.
+    url: https://github.com/puppetlabs/puppet
+    # Refspec to clone (e.g. HEAD, refs/heads/.., refs/tags/..).
+    ref: refs/heads/master
+```
+
+##### github-project-manager:
+
+**project-name** &mdash; Same as the project name on GitHub.<br />
+**id** &mdash; The commit hash of the ref specified.
+
+```yaml
+!github-project-manager
+# API endpoint to use, useful when you are running GHE.
+apiUrl: https://api.github.com
+ # User or organization to discover projects on.
+user: udoprog
+# The authentication method to use.
 auth:
   !basic-auth
   username: user
   password: password
 ```
 
-## Project Managers (projectManager)
+#### Repository
 
-### Static Project Manager (!static-project-manager)
-
-**project-name** &mdash; *Statically configured*<br />
-**id** &mdash; The commit hash of the ref specified.
-
-```yaml
-projectManager:
-  !static-project-manager
-  # Shared authentication method for all specified projects.
-  auth: ...
-  # List of projects to use.
-  projects:
-    # Project specific authentication method.
-    - auth: ...
-      # Project name.
-      name: puppet
-      # Clone URL.
-      url: https://github.com/puppetlabs/puppet
-      # Refspec to clone (e.g. HEAD, refs/heads/.., refs/tags/..).
-      ref: refs/heads/master
-```
-
-### Github Project Manager (!github-project-manager)
-
-**project-name** &mdash; Same as the project name on GitHub.<br />
-**id** &mdash; The commit hash of the ref specified.
-
-```yaml
-projectManager:
-  !github-project-manager
-  # API endpoint to use, useful when you are running GHE.
-  apiUrl: https://api.github.com
-  # User or organization to discover projects on.
-  user: udoprog
-  # The authentication method to use.
-  auth:
-    !basic-auth
-    username: user
-    password: password
-```
-
-## Repository (repository)
+Key: **repository**
 
 Store and retrieve the content of external git repositories.
 
-### Local Repository (!local-repository)
-
+##### local-repository:
 Store everything in the local filesystem.
 
 ```yaml
-repository:
-  !local-repository
-  # Path to store all checked out repositories.
-  path: /var/exposr/repos
+!local-repository
+# Path to store all checked out repositories.
+path: /var/exposr/repos
 ```
 
-## Builder (builder)
+#### Builder
+
+Key: **builder**
 
 How to execute the specified build steps in the **.exposr.yml** manifest.
 
-### Local Builder (!local-builder)
+##### local-builder:
 
 Executes every single command specified in the **commands** section of the maniefst in sequence on the local machine.
 
-*Note: currently has no settings*
-
 ```yaml
-builder:
-  !local-builder {}
+# Local builder has no configuration options.
+# Configure using the empty map '{}'.
+!local-builder {}
 ```
 
-## Publisher (publisher)
+#### Publisher
+
+Key: **publisher**
 
 Decides how to send the result of a build to it's destination depending on the **.exposr.yml** manifest.
 
-### Local Publisher (!local-publisher)
+##### local-publisher:
 
 Takes the resulting build and publishes everything in the **publish** section to the specified local directory.
 
@@ -173,15 +179,33 @@ publisher:
   path: /var/exposr/publish
 ```
 
-## Project Reporter (projectReporter)
+#### Project Reporter
+
+Key: **projectReporter**
 
 Is responsible for reporting the state of all discovered projects so they can be made available through the REST API.
 
-### Memory Project Reporter (!memory-project-reporter)
+##### memory-project-reporter:
 
 Retains the current state in memory, is lost on restarts.
 
 ```yaml
-projectReporter:
-  !memory-project-reporter {}
+!memory-project-reporter {}
+```
+
+#### Authentication Methods
+
+Certain components require or support authentication methods.
+
+When these are required, the following structure is supported.
+
+*Note:* Authentication methods are typically designated with the **auth:** configuration key, but this might vary.
+
+##### basic-auth
+
+```yaml
+# Authenticate using a username and password combination.
+!basic-auth
+username: user
+password: password
 ```
