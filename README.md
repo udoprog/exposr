@@ -302,4 +302,21 @@ Three distinct types of events are sent.
 * **ERR** &mdash; Reserved for lines from stderr of any child process.
 * **OUT** &mdash; Reserved for lines from stdout of any child process.
 
-When executing a build task, the **SYS** output typically indicates what is being executed while **OUT** and **ERR** would simply be the output written by the child process.
+*An example* &mdash; When executing a *build task* the **SYS** output would give a nice indication of which commands are being executed and when while **OUT** and **ERR** would would act as the output from those commands.
+
+```text
+event: SYS
+data: Building project in directory: <dir>
+
+event: SYS
+data: Running command: scripts/build
+
+event: OUT
+data: Building project...
+
+event: ERR
+data: Failed to build project!
+
+event: SYS
+data: Command exited with status code -1
+```
