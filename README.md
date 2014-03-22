@@ -154,14 +154,17 @@ Decides how to send the result of a build to it's destination depending on the *
 
 Takes the resulting build and publishes everything in the **publish** section to the specified local directory.
 
-This will create a directory structure with the following.
+This will setup the following directory structure.
 
 ```text
 <project-name> -> .builds/<project-name>/<id>
-.builds/<project-name>/<id>
+.builds/<project-name>/<id-1>
+.builds/<project-name>/<id-2>
+...
 ```
 
-The **&lt;project-name&gt;** symlink is created atomically using an overwriting rename.
+**&lt;project-name&gt;** is a symlink which is atomically updated using
+a rename.
 
 ```yaml
 publisher:
