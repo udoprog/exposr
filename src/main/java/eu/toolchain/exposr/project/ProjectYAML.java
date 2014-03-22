@@ -3,6 +3,7 @@ package eu.toolchain.exposr.project;
 import static eu.toolchain.exposr.yaml.Utils.notEmpty;
 import lombok.Getter;
 import lombok.Setter;
+import eu.toolchain.exposr.yaml.ValidationException;
 
 public class ProjectYAML {
     @Getter
@@ -21,7 +22,8 @@ public class ProjectYAML {
     @Setter
     private ProjectAuthYAML auth;
 
-    public Project build(String context, ProjectAuth auth) {
+    public Project build(String context, ProjectAuth auth)
+            throws ValidationException {
         notEmpty(context + ".name", name);
         notEmpty(context + ".url", url);
         notEmpty(context + ".ref", ref);

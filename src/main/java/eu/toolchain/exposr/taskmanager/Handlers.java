@@ -14,13 +14,13 @@ public final class Handlers {
     public static <T, R> Handle<T> adapter(final Handle<R> callback) {
         return new Handle<T>() {
             @Override
-            public void done(T value) {
-                callback.done(null);
+            public void done(TaskSnapshot task, T value) {
+                callback.done(task, null);
             }
 
             @Override
-            public void error(Throwable t) {
-                callback.error(t);
+            public void error(TaskSnapshot task, Throwable t) {
+                callback.error(task, t);
             }
         };
     }
@@ -35,8 +35,8 @@ public final class Handlers {
     public static <T, R> OnDone<T> adapter(final OnDone<R> callback) {
         return new OnDone<T>() {
             @Override
-            public void done(T value) {
-                callback.done(null);
+            public void done(TaskSnapshot task, T value) {
+                callback.done(task, null);
             }
         };
     }

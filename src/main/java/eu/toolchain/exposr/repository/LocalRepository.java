@@ -17,6 +17,7 @@ import eu.toolchain.exposr.project.reporter.ProjectReporter;
 import eu.toolchain.exposr.publisher.Publisher;
 import eu.toolchain.exposr.taskmanager.HandleBuilder.Handle;
 import eu.toolchain.exposr.taskmanager.TaskManager;
+import eu.toolchain.exposr.taskmanager.TaskSnapshot;
 import eu.toolchain.exposr.tasks.BuildTask;
 import eu.toolchain.exposr.tasks.DeployTask;
 import eu.toolchain.exposr.tasks.SyncTask;
@@ -53,7 +54,7 @@ public class LocalRepository implements Repository {
         }
 
         @Override
-        public void done(SyncResult result) {
+        public void done(TaskSnapshot task, SyncResult result) {
             if (result.isUpdated()) {
                 build(project);
             } else {
@@ -61,15 +62,16 @@ public class LocalRepository implements Repository {
                         + project);
             }
 
-            projectReporter.reportSync(project, result.getId().name(), null);
+            projectReporter.reportSync(task.getId(), project, result.getId()
+                    .name(), null);
         }
 
         @Override
-        public void error(Throwable t) {
+        public void error(TaskSnapshot task, Throwable t) {
             log.warn("Not triggering build because sync resulted in failure: "
                     + project);
 
-            projectReporter.reportSync(project, null, t);
+            projectReporter.reportSync(task.getId(), project, null, t);
         }
     }
 
@@ -81,13 +83,13 @@ public class LocalRepository implements Repository {
         }
 
         @Override
-        public void done(Void value) {
-            projectReporter.reportBuild(project, null);
+        public void done(TaskSnapshot task, Void value) {
+            projectReporter.reportBuild(task.getId(), project, null);
         }
 
         @Override
-        public void error(Throwable t) {
-            projectReporter.reportBuild(project, t);
+        public void error(TaskSnapshot task, Throwable t) {
+            projectReporter.reportBuild(task.getId(), project, t);
         }
     }
 
@@ -103,13 +105,13 @@ public class LocalRepository implements Repository {
     public List<Long> syncAll() {
         log.info("Syncronizing All Projects");
 
-        final List<Long> taskIds = new ArrayList<Long>();
+        final List<Long> ids = new ArrayList<Long>();
 
         for (final Project project : projectManager.getProjects()) {
-            taskIds.add(sync(project));
+            ids.add(sync(project));
         }
 
-        return taskIds;
+        return ids;
     }
 
     @Override
@@ -125,13 +127,13 @@ public class LocalRepository implements Repository {
     public List<Long> buildAll() {
         log.info("Building All Projects");
 
-        final List<Long> taskIds = new ArrayList<Long>();
+        final List<Long> ids = new ArrayList<Long>();
 
         for (final Project project : projectManager.getProjects()) {
-            taskIds.add(build(project));
+            ids.add(build(project));
         }
 
-        return taskIds;
+        return ids;
     }
 
     @Override

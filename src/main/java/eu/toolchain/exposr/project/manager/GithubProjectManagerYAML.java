@@ -5,6 +5,7 @@ import lombok.Getter;
 import lombok.Setter;
 import eu.toolchain.exposr.project.ProjectAuth;
 import eu.toolchain.exposr.project.ProjectAuthYAML;
+import eu.toolchain.exposr.yaml.ValidationException;
 
 public class GithubProjectManagerYAML implements ProjectManagerYAML {
     public static final String TYPE = "!github-project-manager";
@@ -26,7 +27,7 @@ public class GithubProjectManagerYAML implements ProjectManagerYAML {
     private ProjectAuthYAML auth;
 
     @Override
-    public ProjectManager build(String context) {
+    public ProjectManager build(String context) throws ValidationException {
         notEmpty(context + ".user", user);
         final ProjectAuth auth;
 

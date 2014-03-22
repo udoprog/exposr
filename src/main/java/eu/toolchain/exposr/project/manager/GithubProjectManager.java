@@ -13,14 +13,15 @@ import org.eclipse.egit.github.core.Repository;
 import org.eclipse.egit.github.core.client.GitHubClient;
 import org.eclipse.egit.github.core.service.RepositoryService;
 
-import eu.toolchain.exposr.project.ProjectAuth;
 import eu.toolchain.exposr.project.Project;
+import eu.toolchain.exposr.project.ProjectAuth;
 import eu.toolchain.exposr.project.ProjectException;
 import eu.toolchain.exposr.taskmanager.DefaultTaskManager;
 import eu.toolchain.exposr.taskmanager.HandleBuilder;
 import eu.toolchain.exposr.taskmanager.HandleBuilder.OnDone;
 import eu.toolchain.exposr.taskmanager.Handlers;
 import eu.toolchain.exposr.taskmanager.Task;
+import eu.toolchain.exposr.taskmanager.TaskSnapshot;
 import eu.toolchain.exposr.taskmanager.TaskState;
 
 @Slf4j
@@ -63,7 +64,7 @@ public class GithubProjectManager implements RefreshableProjectManager {
 
         builder.done(new OnDone<List<Project>>() {
             @Override
-            public void done(List<Project> value) {
+            public void done(TaskSnapshot snapshot, List<Project> value) {
                 synchronized (projects) {
                     projects = value;
                 }

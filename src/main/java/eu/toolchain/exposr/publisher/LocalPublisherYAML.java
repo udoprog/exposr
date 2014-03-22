@@ -1,8 +1,12 @@
 package eu.toolchain.exposr.publisher;
 
-import static eu.toolchain.exposr.yaml.Utils.notEmpty;
+import static eu.toolchain.exposr.yaml.Utils.toDirectory;
+
+import java.nio.file.Path;
+
 import lombok.Getter;
 import lombok.Setter;
+import eu.toolchain.exposr.yaml.ValidationException;
 
 public class LocalPublisherYAML implements PublisherYAML {
     public static final String TYPE = "!local-publisher";
@@ -12,8 +16,8 @@ public class LocalPublisherYAML implements PublisherYAML {
     private String path;
 
     @Override
-    public Publisher build(String context) {
-        notEmpty(context + ".path", path);
-        return new LocalPublisher(path);
+    public Publisher build(String context) throws ValidationException {
+        final Path p = toDirectory(context + ".path", this.path);
+        return new LocalPublisher(p);
     }
 }

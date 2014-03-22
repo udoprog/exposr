@@ -1,10 +1,8 @@
 package eu.toolchain.exposr;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URI;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -16,9 +14,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.glassfish.grizzly.http.server.HttpServer;
 import org.quartz.Scheduler;
 import org.quartz.SchedulerException;
-import org.yaml.snakeyaml.TypeDescription;
-import org.yaml.snakeyaml.Yaml;
-import org.yaml.snakeyaml.constructor.Constructor;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
@@ -29,50 +24,22 @@ import com.google.inject.name.Names;
 import com.google.inject.servlet.GuiceServletContextListener;
 
 import eu.toolchain.exposr.builder.Builder;
-import eu.toolchain.exposr.builder.LocalBuilderYAML;
-import eu.toolchain.exposr.project.BasicProjectAuthYAML;
-import eu.toolchain.exposr.project.manager.GithubProjectManagerYAML;
 import eu.toolchain.exposr.project.manager.ProjectManager;
 import eu.toolchain.exposr.project.manager.RefreshableProjectManager;
-import eu.toolchain.exposr.project.manager.StaticProjectManagerYAML;
-import eu.toolchain.exposr.project.reporter.MemoryProjectReporterYAML;
 import eu.toolchain.exposr.project.reporter.ProjectReporter;
-import eu.toolchain.exposr.publisher.LocalPublisherYAML;
 import eu.toolchain.exposr.publisher.Publisher;
-import eu.toolchain.exposr.repository.LocalRepositoryYAML;
 import eu.toolchain.exposr.repository.Repository;
 import eu.toolchain.exposr.taskmanager.DefaultTaskManager;
 import eu.toolchain.exposr.taskmanager.HandleBuilder;
 import eu.toolchain.exposr.taskmanager.HandleBuilder.Handle;
 import eu.toolchain.exposr.taskmanager.TaskManager;
+import eu.toolchain.exposr.taskmanager.TaskSnapshot;
 import eu.toolchain.exposr.yaml.ExposrConfig;
-import eu.toolchain.exposr.yaml.ExposrConfigYAML;
+import eu.toolchain.exposr.yaml.ValidationException;
 
 @Slf4j
 public class Main extends GuiceServletContextListener {
     public static final String EXPOSR_CONFIG = "exposr.yaml";
-
-    private static final class CustomConstructor extends Constructor {
-        public CustomConstructor() {
-            addTypeDescription(new TypeDescription(
-                    GithubProjectManagerYAML.class,
-                    GithubProjectManagerYAML.TYPE));
-            addTypeDescription(new TypeDescription(
-                    StaticProjectManagerYAML.class,
-                    StaticProjectManagerYAML.TYPE));
-            addTypeDescription(new TypeDescription(LocalRepositoryYAML.class,
-                    LocalRepositoryYAML.TYPE));
-            addTypeDescription(new TypeDescription(BasicProjectAuthYAML.class,
-                    BasicProjectAuthYAML.TYPE));
-            addTypeDescription(new TypeDescription(LocalPublisherYAML.class,
-                    LocalPublisherYAML.TYPE));
-            addTypeDescription(new TypeDescription(LocalBuilderYAML.class,
-                    LocalBuilderYAML.TYPE));
-            addTypeDescription(new TypeDescription(
-                    MemoryProjectReporterYAML.class,
-                    MemoryProjectReporterYAML.TYPE));
-        }
-    }
 
     public static Injector injector;
     private static ExposrConfig config;
@@ -117,12 +84,12 @@ public class Main extends GuiceServletContextListener {
             if (refresh != null) {
                 refresh.callback(new Handle<Void>() {
                     @Override
-                    public void done(Void value) {
+                    public void done(TaskSnapshot task, Void value) {
                         repository.syncAll();
                     }
     
                     @Override
-                    public void error(Throwable t) {
+                    public void error(TaskSnapshot task, Throwable t) {
                         log.error("Initial refresh failed", t);
                     }
                 }).execute();
@@ -135,8 +102,6 @@ public class Main extends GuiceServletContextListener {
     }
 
     public static void main(String[] args) {
-        final Yaml yaml = new Yaml(new CustomConstructor());
-
         final String configPath;
 
         if (args.length < 1) {
@@ -145,20 +110,19 @@ public class Main extends GuiceServletContextListener {
             configPath = args[0];
         }
 
-        final File configFile = new File(configPath);
-
-        final ExposrConfigYAML configYaml;
-
         try {
-            configYaml = yaml.loadAs(new FileInputStream(configFile),
-                    ExposrConfigYAML.class);
-        } catch (FileNotFoundException e) {
-            log.error("Failed to read configuration", e);
+            config = ExposrConfig.parse(Paths.get(configPath));
+        } catch (ValidationException | IOException e) {
+            log.error("Invalid configuration file: " + configPath);
             System.exit(1);
             return;
         }
 
-        config = configYaml.build();
+        if (config == null) {
+            log.error("No configuration, shutting down");
+            System.exit(1);
+            return;
+        }
 
         final GrizzlyServer grizzlyServer = new GrizzlyServer();
         final HttpServer server;

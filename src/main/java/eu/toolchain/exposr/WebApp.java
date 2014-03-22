@@ -18,7 +18,7 @@ import eu.toolchain.exposr.http.ExposrExceptionMapper;
 import eu.toolchain.exposr.http.ExposrResource;
 import eu.toolchain.exposr.http.ProjectResource;
 import eu.toolchain.exposr.http.SyncResource;
-import eu.toolchain.exposr.http.TasksResource;
+import eu.toolchain.exposr.http.TaskResource;
 
 @Slf4j
 public class WebApp extends ResourceConfig {
@@ -35,7 +35,7 @@ public class WebApp extends ResourceConfig {
         register(ExposrResource.class);
         register(ProjectResource.class);
         register(SyncResource.class);
-        register(TasksResource.class);
+        register(TaskResource.class);
 
         GuiceBridge.getGuiceBridge().initializeGuiceBridge(serviceLocator);
 

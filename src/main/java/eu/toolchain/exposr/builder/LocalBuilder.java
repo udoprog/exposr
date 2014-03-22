@@ -8,12 +8,12 @@ import lombok.extern.slf4j.Slf4j;
 import eu.toolchain.exposr.project.Project;
 import eu.toolchain.exposr.taskmanager.StreamReader;
 import eu.toolchain.exposr.taskmanager.TaskState;
-import eu.toolchain.exposr.yaml.ExposrYAML;
+import eu.toolchain.exposr.yaml.ExposrManifest;
 
 @Slf4j
 public class LocalBuilder implements Builder {
     @Override
-    public void execute(final Project project, final ExposrYAML manifest,
+    public void execute(final Project project, final ExposrManifest manifest,
             final Path buildPath, final TaskState state)
             throws ProjectBuildException {
         for (final String command : manifest.getCommands()) {

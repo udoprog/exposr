@@ -2,11 +2,11 @@ package eu.toolchain.exposr.taskmanager;
 
 public interface HandleBuilder<T> {
     public static interface OnDone<T> {
-        void done(T value);
+        void done(TaskSnapshot task, T value);
     }
 
     public static interface OnError {
-        void error(Throwable t);
+        void error(TaskSnapshot task, Throwable t);
     }
 
     public static interface Handle<T> extends OnDone<T>, OnError {

@@ -1,7 +1,5 @@
 package eu.toolchain.exposr.tasks;
 
-import java.io.IOException;
-import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -10,7 +8,6 @@ import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 
 import org.eclipse.jgit.lib.ObjectId;
-import org.yaml.snakeyaml.Yaml;
 
 import eu.toolchain.exposr.builder.Builder;
 import eu.toolchain.exposr.builder.ProjectBuildException;
@@ -18,7 +15,8 @@ import eu.toolchain.exposr.project.Project;
 import eu.toolchain.exposr.publisher.Publisher;
 import eu.toolchain.exposr.taskmanager.Task;
 import eu.toolchain.exposr.taskmanager.TaskState;
-import eu.toolchain.exposr.yaml.ExposrYAML;
+import eu.toolchain.exposr.yaml.ExposrManifest;
+import eu.toolchain.exposr.yaml.ExposrManifestYAML;
 
 @Slf4j
 public class BuildTask implements Task<Void> {
@@ -28,7 +26,6 @@ public class BuildTask implements Task<Void> {
     private final Publisher publisher;
     private final Project project;
     private final Path buildPath;
-    private static final ThreadLocal<Yaml> yamls = new ThreadLocal<Yaml>();
 
     public BuildTask(Builder builder,
             Publisher publisher, Project project, Path buildPath) {
@@ -36,27 +33,6 @@ public class BuildTask implements Task<Void> {
         this.publisher = publisher;
         this.project = project;
         this.buildPath = buildPath;
-    }
-
-    private Yaml getYaml() {
-        Yaml yaml = yamls.get();
-
-        if (yaml != null) {
-            return yaml;
-        }
-
-        synchronized (yamls) {
-            yaml = yamls.get();
-
-            if (yaml != null) {
-                return yaml;
-            }
-
-            yaml = new Yaml();
-            yamls.set(yaml);
-        }
-
-        return yaml;
     }
 
     @Override
@@ -72,7 +48,7 @@ public class BuildTask implements Task<Void> {
                     + "' manifest");
         }
 
-        final ExposrYAML manifest = parseManifest(manifestFile);
+        final ExposrManifest manifest = ExposrManifestYAML.parse(manifestFile);
 
         final List<Path> paths = new ArrayList<Path>();
 
@@ -83,34 +59,5 @@ public class BuildTask implements Task<Void> {
         builder.execute(project, manifest, buildPath, state);
         publisher.publish(project.getName(), head.name(), paths, state);
         return null;
-    }
-
-    private ExposrYAML parseManifest(final Path manifestFile)
-            throws ProjectBuildException {
-        final ExposrYAML manifest;
-
-        final Yaml yaml = getYaml();
-
-        final InputStream inputStream;
-
-        try {
-            inputStream = Files.newInputStream(manifestFile);
-        } catch (IOException e) {
-            throw new ProjectBuildException("Failed to open manifest", e);
-        }
-
-        try {
-            manifest = yaml.loadAs(inputStream, ExposrYAML.class);
-        } catch (Throwable t) {
-            throw new ProjectBuildException(
-                    "Invalid manifest: " + manifestFile, t);
-        }
-
-        if (manifest.getPublish() == null || manifest.getPublish().isEmpty()) {
-            throw new ProjectBuildException("No 'publish' declaration in "
-                    + manifestFile);
-        }
-
-        return manifest;
     }
 }

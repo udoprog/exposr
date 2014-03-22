@@ -7,10 +7,11 @@ import java.util.List;
 
 import lombok.Getter;
 import lombok.Setter;
-import eu.toolchain.exposr.project.ProjectAuth;
 import eu.toolchain.exposr.project.Project;
+import eu.toolchain.exposr.project.ProjectAuth;
 import eu.toolchain.exposr.project.ProjectAuthYAML;
 import eu.toolchain.exposr.project.ProjectYAML;
+import eu.toolchain.exposr.yaml.ValidationException;
 
 public class StaticProjectManagerYAML implements ProjectManagerYAML {
     public static final String TYPE = "!static-project-manager";
@@ -24,7 +25,7 @@ public class StaticProjectManagerYAML implements ProjectManagerYAML {
     private ProjectAuthYAML auth;
 
     @Override
-    public ProjectManager build(String context) {
+    public ProjectManager build(String context) throws ValidationException {
         notEmpty(context + ".projects", this.projects);
 
         final List<Project> projects = new ArrayList<Project>();

@@ -66,6 +66,6 @@ public class ExposrResource {
 
         long taskId = repository.deploy(name, id, inputStream);
 
-        return TasksResource.taskCreated(info, taskId);
+        return TaskResource.taskCreated(info, taskId);
     }
 }

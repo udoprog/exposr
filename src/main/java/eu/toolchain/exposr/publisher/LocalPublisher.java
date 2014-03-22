@@ -3,13 +3,13 @@ package eu.toolchain.exposr.publisher;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.List;
 
 import lombok.extern.slf4j.Slf4j;
 import net.lingala.zip4j.core.ZipFile;
 import net.lingala.zip4j.exception.ZipException;
+import net.lingala.zip4j.model.ZipParameters;
 
 import org.apache.commons.io.FileUtils;
 
@@ -17,10 +17,10 @@ import eu.toolchain.exposr.taskmanager.TaskState;
 
 @Slf4j
 public class LocalPublisher implements Publisher {
-    private final Path deployPath;
+    private final Path path;
     
-    public LocalPublisher(String deployPath) {
-        this.deployPath = Paths.get(deployPath);
+    public LocalPublisher(Path path) {
+        this.path = path;
     }
     
     private void atomicallySymlink(final Path destination,
@@ -47,10 +47,11 @@ public class LocalPublisher implements Publisher {
     public void publish(final String name, final String id,
             final List<Path> paths, final TaskState state)
             throws ProjectPublishException {
-        final Path publishPath = deployPath.resolve(".builds").resolve(name)
-                .resolve(id);
-        final Path destination = deployPath.resolve(name);
-        final Path destinationTemp = deployPath.resolve("." + name);
+        final Path publishPath = buildPublishDirectory(path.resolve(".builds"),
+                name, id, paths, state);
+
+        final Path destination = path.resolve(name);
+        final Path destinationTemp = path.resolve("." + name);
         final Path linkPath = destination.getParent().relativize(publishPath);
 
         if (Files.isSymbolicLink(destinationTemp)) {
@@ -63,6 +64,17 @@ public class LocalPublisher implements Publisher {
                         + destinationTemp);
             }
         }
+
+        state.system("Creating symlink " + destination + " to " + linkPath);
+        atomicallySymlink(destination, destinationTemp, linkPath);
+    }
+
+    public static Path buildPublishDirectory(final Path path,
+            final String name,
+            final String id,
+            final List<Path> paths, final TaskState state)
+            throws ProjectPublishException {
+        final Path publishPath = path.resolve(name).resolve(id);
 
         if (Files.exists(publishPath)) {
             throw new ProjectPublishException("Publish path already exists: "
@@ -112,13 +124,20 @@ public class LocalPublisher implements Publisher {
                     "publish: Don't know how to handle: " + source);
         }
 
-        state.system("Creating symlink " + destination + " to " + linkPath);
-        atomicallySymlink(destination, destinationTemp, linkPath);
+        return publishPath;
     }
 
-    private void extractZipFile(final Path sourcePath, final Path publishPath)
+    public static void buildZipFile(final Path sourcePath, final Path targetPath)
             throws ZipException {
-        ZipFile zipFile = new ZipFile(sourcePath.toFile());
+        final ZipFile zipFile = new ZipFile(targetPath.toFile());
+        final ZipParameters parameters = new ZipParameters();
+        zipFile.addFolder(sourcePath.toFile(), parameters);
+    }
+
+    public static void extractZipFile(final Path sourcePath,
+            final Path publishPath)
+            throws ZipException {
+        final ZipFile zipFile = new ZipFile(sourcePath.toFile());
         zipFile.extractAll(publishPath.toString());
     }
 }

@@ -4,9 +4,9 @@ import java.nio.file.Path;
 
 import eu.toolchain.exposr.project.Project;
 import eu.toolchain.exposr.taskmanager.TaskState;
-import eu.toolchain.exposr.yaml.ExposrYAML;
+import eu.toolchain.exposr.yaml.ExposrManifest;
 
 public interface Builder {
-    public void execute(Project project, ExposrYAML manifest, Path buildPath,
-            TaskState state) throws ProjectBuildException;
+    public void execute(Project project, ExposrManifest manifest,
+            Path buildPath, TaskState state) throws ProjectBuildException;
 }

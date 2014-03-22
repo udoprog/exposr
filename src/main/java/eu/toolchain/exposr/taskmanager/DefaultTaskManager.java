@@ -52,7 +52,7 @@ public class DefaultTaskManager implements TaskManager {
 
                 for (OnError callback : error) {
                     try {
-                        callback.error(t);
+                        callback.error(snapshot, t);
                     } catch (Throwable t2) {
                         log.error("Error when invoking 'error' callback", t2);
                     }
@@ -66,7 +66,7 @@ public class DefaultTaskManager implements TaskManager {
 
             for (OnDone<T> callback : done) {
                 try {
-                    callback.done(result);
+                    callback.done(snapshot, result);
                 } catch (Throwable t) {
                     log.error("Error when invoking 'done' callback", t);
                 }

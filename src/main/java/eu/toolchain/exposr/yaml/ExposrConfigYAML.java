@@ -20,7 +20,7 @@ public class ExposrConfigYAML {
     @Setter
     private ProjectManagerYAML projectManager;
 
-    public ProjectManager setupProjectManager() {
+    public ProjectManager setupProjectManager() throws ValidationException {
         if (projectManager == null)
             throw new RuntimeException("'projectManager' must be defined");
 
@@ -31,7 +31,7 @@ public class ExposrConfigYAML {
     @Setter
     private RepositoryYAML repository;
 
-    public Repository setupRepository() {
+    public Repository setupRepository() throws ValidationException {
         if (repository == null)
             throw new RuntimeException("'repository' must be defined");
 
@@ -42,7 +42,7 @@ public class ExposrConfigYAML {
     @Setter
     private PublisherYAML publisher;
 
-    public Publisher setupPublisher() {
+    public Publisher setupPublisher() throws ValidationException {
         if (publisher == null)
             throw new RuntimeException("'publisher' must be defined");
 
@@ -71,7 +71,7 @@ public class ExposrConfigYAML {
         return projectReporter.build("projectReporter");
     }
 
-    public ExposrConfig build() {
+    public ExposrConfig build() throws ValidationException {
         final ExposrConfig config = new ExposrConfig();
         config.setProjectManager(setupProjectManager());
         config.setRepository(setupRepository());

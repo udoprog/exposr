@@ -17,6 +17,9 @@ projectManager:
     - name: puppet
       url: https://github.com/puppetlabs/puppet
       ref: HEAD
+    - name: custom
+      url: file:///home/udoprog/repo/test
+      ref: HEAD
       # auth: ...
 
 repository:
@@ -24,8 +27,11 @@ repository:
   path: /home/udoprog/temp/repos
 
 publisher:
-  !local-publisher
+#  !local-publisher
+#  path: /home/udoprog/temp/publish
+  !remote-publisher
   path: /home/udoprog/temp/publish
+  url: http://localhost:8080
 
 builder:
   !local-builder {}

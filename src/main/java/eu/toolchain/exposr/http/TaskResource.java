@@ -25,19 +25,19 @@ import eu.toolchain.exposr.taskmanager.TaskOutput;
 import eu.toolchain.exposr.taskmanager.TaskSnapshot;
 import eu.toolchain.exposr.taskmanager.TaskSubscriber;
 
-@Path("/_exposr/tasks")
+@Path("/_exposr/task")
 @Produces(MediaType.APPLICATION_JSON)
-public class TasksResource {
+public class TaskResource {
     @Inject
     private TaskManager taskManager;
 
-    public static final class TaskStatus {
+    public static final class TaskResponse {
         @Getter
         private final URI link;
         @Getter
         private final URI output;
 
-        public TaskStatus(URI link, URI output) {
+        public TaskResponse(URI link, URI output) {
             this.link = link;
             this.output = output;
         }
@@ -91,7 +91,7 @@ public class TasksResource {
     }
 
     public static Response tasksCreated(UriInfo info, List<Long> ids) {
-        List<TaskStatus> result = new ArrayList<TaskStatus>(ids.size());
+        List<TaskResponse> result = new ArrayList<TaskResponse>(ids.size());
 
         for (long id : ids) {
             result.add(task(info, id));
@@ -101,17 +101,17 @@ public class TasksResource {
     }
 
     public static Response taskCreated(UriInfo info, long id) {
-        final URI link = info.getBaseUriBuilder().path("/_exposr/tasks/" + id)
+        final URI link = info.getBaseUriBuilder().path("/_exposr/task/" + id)
                 .build();
         return Response.created(link).entity(task(info, id)).build();
     }
 
-    public static TaskStatus task(UriInfo info, long id) {
-        final URI link = info.getBaseUriBuilder().path("/_exposr/tasks/" + id)
+    public static TaskResponse task(UriInfo info, long id) {
+        final URI link = info.getBaseUriBuilder().path("/_exposr/task/" + id)
                 .build();
         final URI output = info.getBaseUriBuilder()
-                .path("/_exposr/tasks/" + id + "/output").build();
-        return new TaskStatus(link, output);
+                .path("/_exposr/task/" + id + "/output").build();
+        return new TaskResponse(link, output);
 
     }
 }

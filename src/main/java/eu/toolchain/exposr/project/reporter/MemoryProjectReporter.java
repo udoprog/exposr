@@ -10,8 +10,9 @@ public class MemoryProjectReporter implements ProjectReporter {
     private final MemoryProjectLog<ProjectBuild> builds = new MemoryProjectLog<ProjectBuild>();
 
     @Override
-    public void reportSync(Project project, String id, Throwable error) {
-        syncs.append(project, new ProjectSync(new Date(), id, error));
+    public void reportSync(long taskId, Project project, String id,
+            Throwable error) {
+        syncs.append(project, new ProjectSync(taskId, new Date(), id, error));
     }
 
     @Override
@@ -25,8 +26,8 @@ public class MemoryProjectReporter implements ProjectReporter {
     }
 
     @Override
-    public void reportBuild(Project project, Throwable error) {
-        builds.append(project, new ProjectBuild(new Date(), error));
+    public void reportBuild(long taskId, Project project, Throwable error) {
+        builds.append(project, new ProjectBuild(taskId, new Date(), error));
     }
 
     @Override
