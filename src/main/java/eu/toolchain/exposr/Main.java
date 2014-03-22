@@ -30,7 +30,6 @@ import com.google.inject.servlet.GuiceServletContextListener;
 
 import eu.toolchain.exposr.builder.Builder;
 import eu.toolchain.exposr.builder.LocalBuilderYAML;
-import eu.toolchain.exposr.http.EmbeddedGrizzly;
 import eu.toolchain.exposr.project.BasicProjectAuthYAML;
 import eu.toolchain.exposr.project.manager.GithubProjectManagerYAML;
 import eu.toolchain.exposr.project.manager.ProjectManager;
@@ -161,7 +160,7 @@ public class Main extends GuiceServletContextListener {
 
         config = configYaml.build();
 
-        final EmbeddedGrizzly grizzlyServer = new EmbeddedGrizzly();
+        final GrizzlyServer grizzlyServer = new GrizzlyServer();
         final HttpServer server;
 
         final Thread hook = new Thread(new Runnable() {

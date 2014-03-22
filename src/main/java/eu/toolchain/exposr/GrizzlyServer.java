@@ -1,4 +1,4 @@
-package eu.toolchain.exposr.http;
+package eu.toolchain.exposr;
 
 import java.io.IOException;
 import java.net.URI;
@@ -16,10 +16,9 @@ import org.glassfish.jersey.grizzly2.httpserver.GrizzlyHttpServerFactory;
 import org.glassfish.jersey.servlet.ServletContainer;
 
 import com.google.inject.servlet.GuiceFilter;
-import eu.toolchain.exposr.Main;
 
 @Slf4j
-public class EmbeddedGrizzly {
+public class GrizzlyServer {
     private HttpServer server;
 
     public HttpServer start(URI baseUri) throws IOException {
@@ -38,7 +37,7 @@ public class EmbeddedGrizzly {
                 "ServletContainer", ServletContainer.class);
         servletRegistration.addMapping("/*");
         servletRegistration.setInitParameter("javax.ws.rs.Application",
-                "eu.toolchain.exposr.http.WebApplication");
+                WebApp.class.getName());
 
         // Initialize and register GuiceFilter
         final FilterRegistration registration = context.addFilter(
