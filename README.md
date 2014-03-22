@@ -209,3 +209,87 @@ When these are required, the following structure is supported.
 username: user
 password: password
 ```
+
+# REST API
+
+#### Document Types
+
+##### ErrorMessage
+
+An object describing that an error has occured.
+
+```json
+{"message": <string>}
+```
+
+The **message** attribute describes the error that occured, this message is suitable to show to the end user.
+
+More information can typically be derived by inspecting the HTTP status code directly.
+
+##### TaskResponse
+
+An object describing pending or newly created tasks.
+
+```json
+{"link": <url>, "output": <url>}
+```
+
+The **link** attribute describes the URL to get more information about the newly created tas.
+
+The **output** attribute describes the URL to get Server-Sent Events for output from a specific task.
+
+#### Error Handling
+
+All resources can safely be assumed to have the content type **application/json** and be valid JSON documents.
+
+All errors are indicated with an appropriate status code.
+
+Any non-OK response should be treated as an **ErrorMessage** document.
+
+A good check to see if an error occured would be to inspect the *family* of the status code.
+
+**2xx** &mdash; OK.<br />
+**3xx** &mdash; Redirects which should be followed until a more appropriate status code is encountered.<br />
+**4xx** &mdash; Client error, see the **ErrorMessage** object.<br />
+**5xx** &mdash; Server error, the structure of the message is unrealiable since it might have originated before serializers and handlers have been setup on the service. Check the *Content-Type* of the result and assert that it is **application/json** before attempting to parse an **ErrorMessage** object.
+
+#### Endpoints
+
+All endpoints are under the special **/_exposr** resource and should always be prefixed with this.
+
+For example, the real request to get brief information about all projects would be **GET /_exposr/project**.
+
+###### POST /build
+Build all projects.
+
+Returns a list of **TaskResponse** objects.
+
+###### POST /sync
+Synchronize all projects.
+
+Returns a list of **TaskResponse** objects.
+
+###### GET /project
+Show *brief* information about all projects.
+
+###### GET /project/<name>
+Show *detailed* information about a single project.
+
+###### POST /project/<name>/build
+Trigger a build of a single project.
+
+Will return a **TaskResponse** object.
+
+###### POST /project/<name>/sync
+Trigger a sync of a single project.
+
+Will return a **TaskResponse** object.
+
+###### GET /task
+Get *brief* information about all tasks.
+
+###### GET /task/<id>
+Get *detailed* information about a single task.
+
+###### GET /tasks/<id>/output
+Setup a Server-Sent Event stream to the output of a specific task.
