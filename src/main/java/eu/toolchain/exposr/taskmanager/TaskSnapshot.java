@@ -13,18 +13,24 @@ import lombok.Getter;
 public final class TaskSnapshot {
     @Getter
     final long id;
+
     @Getter
     final String title;
+
     @Getter
     final private Date started;
+
     @Getter
     final private Date ended;
+
     @Getter
     final private Throwable error;
+
     @Getter
     final private List<TaskOutput> output;
+
     @Getter
-    final private long elapsed;
+    final private long duration;
 
     public TaskSnapshot(long id, String title, Date started, Date ended,
             Throwable error, List<TaskOutput> output) {
@@ -34,6 +40,6 @@ public final class TaskSnapshot {
         this.ended = ended;
         this.error = error;
         this.output = output;
-        this.elapsed = ended.getTime() - started.getTime();
+        this.duration = ended.getTime() - started.getTime();
     }
 }

@@ -3,6 +3,7 @@ package eu.toolchain.exposr.http;
 import java.io.IOException;
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 import javax.inject.Inject;
@@ -42,22 +43,97 @@ public class TaskResource {
             this.output = output;
         }
     }
+    
+    public static class TaskSnapshotResponse {
+        @Getter
+        final long id;
+        
+        @Getter
+        final String title;
+        
+        @Getter
+        final private Date started;
+        
+        @Getter
+        final private Date ended;
+        
+        @Getter
+        final private List<String> errors;
+        
+        @Getter
+        final private List<TaskOutput> output;
+        
+        @Getter
+        final private long duration;
+
+        @Getter
+        final private boolean success;
+
+        public TaskSnapshotResponse(long id, String title, Date started,
+                Date ended, List<String> errors, List<TaskOutput> output,
+                long elapsed, boolean success) {
+            this.id = id;
+            this.title = title;
+            this.started = started;
+            this.ended = ended;
+            this.errors = errors;
+            this.output = output;
+            this.duration = elapsed;
+            this.success = success;
+        }
+
+        public static List<String> makeErrors(Throwable t) {
+            if (t == null)
+                return null;
+
+            final List<String> errors = new ArrayList<String>();
+
+            while (t != null) {
+                errors.add(t.toString());
+                t = t.getCause();
+            }
+
+            return errors;
+        }
+
+        public static TaskSnapshotResponse build(TaskSnapshot task) {
+            final List<String> errors = makeErrors(task.getError());
+            final boolean success = task.getError() == null;
+            return new TaskSnapshotResponse(task.getId(), task.getTitle(),
+                    task.getStarted(), task.getEnded(), errors,
+                    task.getOutput(), task.getDuration(), success);
+        }
+
+        public static List<TaskSnapshotResponse> buildAll(
+                List<TaskSnapshot> tasks) {
+            final List<TaskSnapshotResponse> result = new ArrayList<TaskSnapshotResponse>();
+
+            if (tasks == null)
+                return result;
+
+            for (TaskSnapshot task : tasks) {
+                result.add(build(task));
+            }
+
+            return result;
+        }
+    }
 
     @GET
-    public List<TaskSnapshot> allTasks() {
-        return taskManager.getAll();
+    public List<TaskSnapshotResponse> allTasks() {
+        return TaskSnapshotResponse.buildAll(taskManager.getAll());
     }
 
     @GET
     @Path("/{id}")
-    public TaskSnapshot getTask(@PathParam("id") long id) {
-        final TaskSnapshot snapshot = taskManager.get(id);
+    public TaskSnapshotResponse getTask(@PathParam("id") long id) {
+        final TaskSnapshot task = taskManager.get(id);
 
-        if (snapshot == null) {
+        if (task == null) {
             throw new NotFoundException("No task with id: " + id);
         }
 
-        return snapshot;
+        return TaskSnapshotResponse.build(task);
     }
 
     @GET
