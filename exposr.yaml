@@ -1,5 +1,7 @@
 # vim: sw=2 tabstop=2
 
+# For documentation, see 'Components' in README.md
+
 projectManager:
 #  !github-project-manager
 #  apiUrl: https://api.github.com
@@ -9,18 +11,24 @@ projectManager:
 #    username: user
 #    password: password
   !static-project-manager
+  # Statically configured projects.
   projects:
+    # auth: ...
     - name: puppet
       url: https://github.com/puppetlabs/puppet
       ref: HEAD
+      # auth: ...
 
 repository:
   !local-repository
   path: /home/udoprog/temp/repos
 
-builder:
-  !local-builder {}
-
 publisher:
   !local-publisher
   path: /home/udoprog/temp/publish
+
+builder:
+  !local-builder {}
+
+projectReporter:
+  !memory-project-reporter {}
