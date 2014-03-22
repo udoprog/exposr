@@ -272,15 +272,15 @@ Returns a list of **TaskResponse** objects.
 ###### GET /project
 Show *brief* information about all projects.
 
-###### GET /project/<name>
+###### GET /project/{name}
 Show *detailed* information about a single project.
 
-###### POST /project/<name>/build
+###### POST /project/{name}/build
 Trigger a build of a single project.
 
 Will return a **TaskResponse** object.
 
-###### POST /project/<name>/sync
+###### POST /project/{name}/sync
 Trigger a sync of a single project.
 
 Will return a **TaskResponse** object.
@@ -288,8 +288,18 @@ Will return a **TaskResponse** object.
 ###### GET /task
 Get *brief* information about all tasks.
 
-###### GET /task/<id>
+###### GET /task/{id}
 Get *detailed* information about a single task.
 
-###### GET /tasks/<id>/output
+###### GET /tasks/{id}/output
 Setup a Server-Sent Event stream to the output of a specific task.
+
+All of these messages are suitable to show to the end user.
+
+Three distinct types of events are sent.
+
+* **SYS** &mdash; A string describing something that was done by the service.
+* **ERR** &mdash; Reserved for lines from stderr of any child process.
+* **OUT** &mdash; Reserved for lines from stdout of any child process.
+
+When executing a build task, the **SYS** output typically indicates what is being executed while **OUT** and **ERR** would simply be the output written by the child process.
