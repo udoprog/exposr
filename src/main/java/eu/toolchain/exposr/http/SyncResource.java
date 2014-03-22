@@ -15,6 +15,7 @@ import eu.toolchain.exposr.project.manager.ProjectManager;
 import eu.toolchain.exposr.repository.Repository;
 
 @Path("/_exposr/sync")
+@Produces(MediaType.APPLICATION_JSON)
 public class SyncResource {
     @Inject
     private Repository localRepository;
@@ -30,7 +31,6 @@ public class SyncResource {
 
     @POST
     @Path("/{project}")
-    @Produces(MediaType.APPLICATION_JSON)
     public Response syncProject(@PathParam("project") String project,
             @Context UriInfo info)
             throws Exception {

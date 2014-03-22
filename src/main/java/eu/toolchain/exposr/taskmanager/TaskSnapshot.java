@@ -20,7 +20,7 @@ public final class TaskSnapshot {
     @Getter
     final private Date ended;
     @Getter
-    final private String error;
+    final private Throwable error;
     @Getter
     final private List<TaskOutput> output;
     @Getter
@@ -32,7 +32,7 @@ public final class TaskSnapshot {
         this.title = title;
         this.started = started;
         this.ended = ended;
-        this.error = error == null ? null : error.getMessage();
+        this.error = error;
         this.output = output;
         this.elapsed = ended.getTime() - started.getTime();
     }

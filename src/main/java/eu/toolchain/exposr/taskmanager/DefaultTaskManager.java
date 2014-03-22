@@ -1,15 +1,14 @@
 package eu.toolchain.exposr.taskmanager;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import lombok.extern.slf4j.Slf4j;
-
 import eu.toolchain.exposr.taskmanager.HandleBuilder.OnDone;
 import eu.toolchain.exposr.taskmanager.HandleBuilder.OnError;
 
@@ -19,8 +18,8 @@ public class DefaultTaskManager implements TaskManager {
 
     private long id = 0;
 
-    private final Map<Long, TaskState> pending = new HashMap<Long, TaskState>();
-    private final Map<Long, TaskSnapshot> finished = new HashMap<Long, TaskSnapshot>();
+    private final Map<Long, TaskState> pending = new ConcurrentHashMap<Long, TaskState>();
+    private final Map<Long, TaskSnapshot> finished = new ConcurrentHashMap<Long, TaskSnapshot>();
 
     private static final class TaskTracker<T> implements Runnable {
         private final DefaultTaskManager manager;
@@ -48,8 +47,8 @@ public class DefaultTaskManager implements TaskManager {
             try {
                 result = this.task.run(state);
             } catch (Throwable t) {
-                this.state.end(t);
-                this.manager.end(this.state.getId());
+                final TaskSnapshot snapshot = this.state.end(t);
+                this.manager.end(this.state.getId(), snapshot);
 
                 for (OnError callback : error) {
                     try {
@@ -62,8 +61,8 @@ public class DefaultTaskManager implements TaskManager {
                 return;
             }
 
-            this.state.end();
-            this.manager.end(this.state.getId());
+            final TaskSnapshot snapshot = this.state.end(null);
+            this.manager.end(this.state.getId(), snapshot);
 
             for (OnDone<T> callback : done) {
                 try {
@@ -146,19 +145,9 @@ public class DefaultTaskManager implements TaskManager {
         return taskId;
     }
 
-    private void end(long id) {
-        // need to lock both to prevent transient state from leaking.
-        synchronized (finished) {
-            synchronized (pending) {
-                final TaskState state = pending.remove(id);
-
-                if (state == null) {
-                    return;
-                }
-
-                finished.put(state.getId(), state.snapshot());
-            }
-        }
+    private void end(long id, final TaskSnapshot snapshot) {
+        finished.put(id, snapshot);
+        pending.remove(id);
     }
 
     /* (non-Javadoc)
@@ -166,21 +155,13 @@ public class DefaultTaskManager implements TaskManager {
      */
     @Override
     public TaskSnapshot get(long id) {
-        final TaskSnapshot snapshot;
-
-        synchronized (finished) {
-            snapshot = this.finished.get(id);
-        }
+        final TaskSnapshot snapshot = this.finished.get(id);
 
         if (snapshot != null) {
             return snapshot;
         }
 
-        final TaskState state;
-
-        synchronized (pending) {
-            state = pending.get(id);
-        }
+        final TaskState state = pending.get(id);
 
         if (state == null) {
             return null;
@@ -191,11 +172,7 @@ public class DefaultTaskManager implements TaskManager {
 
     @Override
     public TaskSubscriber getSubscriber(long id) {
-        final TaskState state;
-
-        synchronized (pending) {
-            state = pending.get(id);
-        }
+        final TaskState state = pending.get(id);
 
         if (state == null) {
             return null;
@@ -209,16 +186,11 @@ public class DefaultTaskManager implements TaskManager {
      */
     @Override
     public List<TaskSnapshot> getAll() {
-        final List<TaskSnapshot> snapshots = new ArrayList<TaskSnapshot>();
+        final List<TaskSnapshot> snapshots = new ArrayList<TaskSnapshot>(
+                finished.values());
 
-        synchronized (finished) {
-            snapshots.addAll(finished.values());
-        }
-
-        synchronized (pending) {
-            for (TaskState state : pending.values()) {
-                snapshots.add(state.snapshot());
-            }
+        for (TaskState state : pending.values()) {
+            snapshots.add(state.snapshot());
         }
 
         return snapshots;

@@ -8,10 +8,11 @@ import java.nio.file.StandardCopyOption;
 import java.util.List;
 
 import lombok.extern.slf4j.Slf4j;
+import net.lingala.zip4j.core.ZipFile;
+import net.lingala.zip4j.exception.ZipException;
 
 import org.apache.commons.io.FileUtils;
 
-import eu.toolchain.exposr.project.Project;
 import eu.toolchain.exposr.taskmanager.TaskState;
 
 @Slf4j
@@ -43,14 +44,13 @@ public class LocalPublisher implements Publisher {
     }
 
     @Override
-    public void publish(final Project project, final List<Path> paths,
-            final String id, final TaskState state)
+    public void publish(final String name, final String id,
+            final List<Path> paths, final TaskState state)
             throws ProjectPublishException {
-        final Path publishPath = deployPath.resolve(".builds")
-                .resolve(project.getName()).resolve(id);
-        final Path destination = deployPath.resolve(project.getName());
-        final Path destinationTemp = deployPath
-                .resolve("." + project.getName());
+        final Path publishPath = deployPath.resolve(".builds").resolve(name)
+                .resolve(id);
+        final Path destination = deployPath.resolve(name);
+        final Path destinationTemp = deployPath.resolve("." + name);
         final Path linkPath = destination.getParent().relativize(publishPath);
 
         if (Files.isSymbolicLink(destinationTemp)) {
@@ -76,25 +76,49 @@ public class LocalPublisher implements Publisher {
                     + publishPath, e);
         }
 
-        for (final Path sourcePath : paths) {
-            if (Files.isDirectory(sourcePath)) {
-                log.info("Copying {} -> {}", sourcePath, publishPath);
+        for (final Path source : paths) {
+            if (Files.isDirectory(source)) {
+                state.system("Copying " + name + ":" + id + " to "
+                        + publishPath);
 
                 try {
-                    FileUtils.copyDirectory(sourcePath.toFile(),
+                    FileUtils.copyDirectory(source.toFile(),
                             publishPath.toFile());
                 } catch (IOException e) {
                     throw new ProjectPublishException("Failed to publish: "
-                            + sourcePath, e);
+                            + source, e);
                 }
 
                 continue;
             }
 
-            throw new ProjectPublishException("publish: Not a directory: "
-                    + sourcePath);
+            final String baseName = source.getFileName().toString();
+
+            if (Files.isRegularFile(source) && baseName.endsWith(".zip")) {
+                state.system("Extracting " + name + ":" + id + " to "
+                        + publishPath);
+
+                try {
+                    extractZipFile(source, publishPath);
+                } catch (ZipException e) {
+                    throw new ProjectPublishException(
+                            "Failed to extract zip file: " + source);
+                }
+
+                continue;
+            }
+
+            throw new ProjectPublishException(
+                    "publish: Don't know how to handle: " + source);
         }
 
+        state.system("Creating symlink " + destination + " to " + linkPath);
         atomicallySymlink(destination, destinationTemp, linkPath);
+    }
+
+    private void extractZipFile(final Path sourcePath, final Path publishPath)
+            throws ZipException {
+        ZipFile zipFile = new ZipFile(sourcePath.toFile());
+        zipFile.extractAll(publishPath.toString());
     }
 }

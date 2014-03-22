@@ -1,6 +1,7 @@
 package eu.toolchain.exposr.repository;
 
 
+import java.io.InputStream;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -17,6 +18,7 @@ import eu.toolchain.exposr.publisher.Publisher;
 import eu.toolchain.exposr.taskmanager.HandleBuilder.Handle;
 import eu.toolchain.exposr.taskmanager.TaskManager;
 import eu.toolchain.exposr.tasks.BuildTask;
+import eu.toolchain.exposr.tasks.DeployTask;
 import eu.toolchain.exposr.tasks.SyncTask;
 import eu.toolchain.exposr.tasks.SyncTask.SyncResult;
 
@@ -89,6 +91,7 @@ public class LocalRepository implements Repository {
         }
     }
 
+    @Override
     public long sync(final Project project) {
         final Path buildPath = repository.resolve(project.getName());
         final SyncTask task = new SyncTask(project, buildPath);
@@ -96,6 +99,7 @@ public class LocalRepository implements Repository {
                 .callback(new SyncCallback(project)).execute();
     }
 
+    @Override
     public List<Long> syncAll() {
         log.info("Syncronizing All Projects");
 
@@ -108,6 +112,7 @@ public class LocalRepository implements Repository {
         return taskIds;
     }
 
+    @Override
     public long build(Project project) {
         final Path buildPath = repository.resolve(project.getName());
         final BuildTask task = new BuildTask(builder, publisher, project,
@@ -116,6 +121,7 @@ public class LocalRepository implements Repository {
                 .callback(new BuildCallback(project)).execute();
     }
 
+    @Override
     public List<Long> buildAll() {
         log.info("Building All Projects");
 
@@ -126,5 +132,13 @@ public class LocalRepository implements Repository {
         }
 
         return taskIds;
+    }
+
+    @Override
+    public long deploy(String name, String id, InputStream inputStream) {
+        final Path buildPath = repository.resolve(name);
+        final DeployTask task = new DeployTask(name, id, inputStream,
+                buildPath, publisher);
+        return taskManager.build("deploy " + name, task).execute();
     }
 }

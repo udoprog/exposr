@@ -5,6 +5,7 @@ import javax.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
 
 import org.glassfish.hk2.api.ServiceLocator;
+import org.glassfish.jersey.media.multipart.MultiPartFeature;
 import org.glassfish.jersey.media.sse.SseFeature;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.jvnet.hk2.guice.bridge.api.GuiceBridge;
@@ -26,6 +27,7 @@ public class WebApp extends ResourceConfig {
         log.info("Setting up Web Application");
 
         register(SseFeature.class);
+        register(MultiPartFeature.class);
         register(ExposrExceptionMapper.class);
 
         // Resources.

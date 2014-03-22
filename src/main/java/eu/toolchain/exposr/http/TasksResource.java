@@ -19,7 +19,6 @@ import lombok.Getter;
 
 import org.glassfish.jersey.media.sse.EventOutput;
 import org.glassfish.jersey.media.sse.OutboundEvent;
-import org.glassfish.jersey.media.sse.SseFeature;
 
 import eu.toolchain.exposr.taskmanager.TaskManager;
 import eu.toolchain.exposr.taskmanager.TaskOutput;
@@ -27,6 +26,7 @@ import eu.toolchain.exposr.taskmanager.TaskSnapshot;
 import eu.toolchain.exposr.taskmanager.TaskSubscriber;
 
 @Path("/_exposr/tasks")
+@Produces(MediaType.APPLICATION_JSON)
 public class TasksResource {
     @Inject
     private TaskManager taskManager;
@@ -44,14 +44,12 @@ public class TasksResource {
     }
 
     @GET
-    @Produces(MediaType.APPLICATION_JSON)
     public List<TaskSnapshot> allTasks() {
         return taskManager.getAll();
     }
 
     @GET
     @Path("/{id}")
-    @Produces(MediaType.APPLICATION_JSON)
     public TaskSnapshot getTask(@PathParam("id") long id) {
         final TaskSnapshot snapshot = taskManager.get(id);
 
@@ -64,7 +62,6 @@ public class TasksResource {
 
     @GET
     @Path("/{id}/output")
-    @Produces(SseFeature.SERVER_SENT_EVENTS)
     public EventOutput getTaskOut(@PathParam("id") long id) {
         final TaskSubscriber subscriber = taskManager.getSubscriber(id);
 

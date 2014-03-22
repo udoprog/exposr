@@ -20,6 +20,7 @@ import eu.toolchain.exposr.project.reporter.ProjectReporter;
 import eu.toolchain.exposr.project.reporter.ProjectSync;
 
 @Path("/_exposr/project")
+@Produces(MediaType.APPLICATION_JSON)
 public class ProjectResource {
     @Inject
     private ProjectManager projectManager;
@@ -65,7 +66,6 @@ public class ProjectResource {
     }
 
     @GET
-    @Produces(MediaType.APPLICATION_JSON)
     public List<ProjectStatus> get() {
         final List<ProjectStatus> response = new ArrayList<ProjectStatus>();
 
@@ -82,7 +82,6 @@ public class ProjectResource {
 
     @GET
     @Path("/{project}")
-    @Produces(MediaType.APPLICATION_JSON)
     public ProjectAllStatus getProject(@PathParam("project") String project) {
         final Project p = getProjectByName(projectManager, project);
 

@@ -36,8 +36,6 @@ public final class TaskState {
     private final String title;
 
     private Date started;
-    private Date ended;
-    private Throwable error;
 
     private final Set<Handle> handlers = Collections
             .newSetFromMap(new ConcurrentHashMap<Handle, Boolean>());
@@ -48,22 +46,15 @@ public final class TaskState {
         this.title = title;
     }
 
-    synchronized void start() {
-        this.started = new Date();
-    }
-
-    void end() {
-        end(null);
-    }
-
-    void end(Throwable error) {
+    void start() {
         synchronized (this) {
-            this.ended = new Date();
-            this.error = error;
+            this.started = new Date();
         }
+    }
 
+    TaskSnapshot end(Throwable error) {
         if (handlers.isEmpty()) {
-            return;
+            return snapshot(new Date(), error);
         }
 
         for (Handle handle : handlers) {
@@ -75,6 +66,7 @@ public final class TaskState {
         }
 
         handlers.clear();
+        return snapshot(new Date(), error);
     }
 
     public void system(String line) {
@@ -106,6 +98,10 @@ public final class TaskState {
     }
 
     public TaskSnapshot snapshot() {
+        return snapshot(null, null);
+    }
+
+    public TaskSnapshot snapshot(Date ended, Throwable error) {
         final List<TaskOutput> output = new ArrayList<TaskOutput>(this.output);
 
         synchronized (this) {

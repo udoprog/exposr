@@ -15,6 +15,7 @@ import eu.toolchain.exposr.project.manager.ProjectManager;
 import eu.toolchain.exposr.repository.Repository;
 
 @Path("/_exposr/build")
+@Produces(MediaType.APPLICATION_JSON)
 public class BuildResource {
     @Inject
     private Repository localRepository;
@@ -23,14 +24,12 @@ public class BuildResource {
     private ProjectManager projectManager;
 
     @POST
-    @Produces(MediaType.APPLICATION_JSON)
     public Response buildAll(@Context UriInfo info) {
         return TasksResource.tasksCreated(info, localRepository.buildAll());
     }
 
     @POST
     @Path("/{project}")
-    @Produces(MediaType.APPLICATION_JSON)
     public Response buildProject(@PathParam("project") String project,
             @Context UriInfo info)
             throws Exception {

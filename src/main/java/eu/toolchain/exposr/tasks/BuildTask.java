@@ -81,7 +81,7 @@ public class BuildTask implements Task<Void> {
         }
 
         builder.execute(project, manifest, buildPath, state);
-        publisher.publish(project, paths, head.name(), state);
+        publisher.publish(project.getName(), head.name(), paths, state);
         return null;
     }
 
