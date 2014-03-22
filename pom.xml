@@ -7,7 +7,8 @@
   <packaging>jar</packaging>
 
   <name>Exposr</name>
-  <url>Build and deploy static pages from git.</url>
+  <url>http://github.com/udoprog/exposr</url>
+  <license>Apache License 2.0</license>
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
