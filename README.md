@@ -77,8 +77,8 @@ auth:
 
 ### Static Project Manager (!static-project-manager)
 
-*project-name* &mdash; *Statically configured*</br>
-*id* &mdash; The commit hash of the ref specified.
+**project-name** &mdash; *Statically configured*<br />
+**id** &mdash; The commit hash of the ref specified.
 
 ```yaml
 projectManager:
@@ -99,8 +99,8 @@ projectManager:
 
 ### Github Project Manager (!github-project-manager)
 
-*project-name* &mdash; Same as the project name on GitHub.<br />
-*id* &mdash; The commit hash of the ref specified.
+**project-name** &mdash; Same as the project name on GitHub.<br />
+**id** &mdash; The commit hash of the ref specified.
 
 ```yaml
 projectManager:
