@@ -3,8 +3,6 @@ package eu.toolchain.exposr.taskmanager;
 import java.util.List;
 
 import lombok.extern.slf4j.Slf4j;
-import eu.toolchain.exposr.taskmanager.TaskSetup.OnDone;
-import eu.toolchain.exposr.taskmanager.TaskSetup.OnError;
 
 /**
  * Track what happens with a single task.
@@ -19,49 +17,69 @@ public final class TaskTracker<T> implements Runnable {
     private final TaskManager manager;
     private final TaskState state;
     private final Task<T> task;
-    private final List<OnDone<T>> done;
-    private final List<OnError> error;
+    private final List<Task.Done<T>> onDone;
+    private final List<Task.Error> onError;
 
     public TaskTracker(TaskManager manager, TaskState state, Task<T> task,
-            List<OnDone<T>> done, List<OnError> error) {
+            List<Task.Done<T>> onDone, List<Task.Error> onError) {
         this.manager = manager;
         this.state = state;
         this.task = task;
-        this.done = done;
-        this.error = error;
+        this.onDone = onDone;
+        this.onError = onError;
     }
 
     @Override
     public void run() {
-        this.state.start();
-
         final T result;
 
         try {
-            result = this.task.run(state);
+            result = runTask();
         } catch (Throwable t) {
-            final TaskSnapshot snapshot = this.state.end(t);
-            this.manager.end(this.state.getId(), snapshot);
-
-            for (OnError callback : error) {
-                try {
-                    callback.error(snapshot, t);
-                } catch (Throwable t2) {
-                    log.error("Error when invoking 'error' callback", t2);
-                }
-            }
-
+            handleError(t);
             return;
         }
 
-        final TaskSnapshot snapshot = this.state.end(null);
+        handleResult(result);
+    }
+
+    private T runTask() throws Exception {
+        if (log.isDebugEnabled())
+            log.debug(String.format("Task ID[%d] RUN %s", state.getId(), task));
+
+        state.start();
+        return task.run(state);
+    }
+
+    private void handleResult(final T result) {
+        if (log.isDebugEnabled())
+            log.debug(String.format("Task ID[%d] END %s", state.getId(), task));
+
+        final TaskSnapshot snapshot = state.end();
         this.manager.end(this.state.getId(), snapshot);
 
-        for (OnDone<T> callback : done) {
+        for (final Task.Done<T> callback : onDone) {
             try {
                 callback.done(snapshot, result);
             } catch (Throwable t) {
-                log.error("Error when invoking 'done' callback", t);
+                log.error("Problem when invoking a done callback", t);
+            }
+        }
+    }
+
+    private void handleError(Throwable error) {
+        if (log.isDebugEnabled())
+            log.debug(String.format("Task ID[%d] ERROR %s", state.getId(),
+                    task));
+
+        final TaskSnapshot snapshot = state.end(error);
+        this.manager.end(state.getId(), snapshot);
+
+        for (final Task.Error e : onError) {
+            try {
+                e.error(snapshot, error);
+            } catch (Throwable t) {
+                log.error("Problem when invoking an error callback", t);
             }
         }
     }

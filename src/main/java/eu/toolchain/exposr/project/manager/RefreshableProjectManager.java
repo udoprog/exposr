@@ -1,10 +1,10 @@
 package eu.toolchain.exposr.project.manager;
 
 import eu.toolchain.exposr.project.ProjectException;
-import eu.toolchain.exposr.taskmanager.TaskSetup;
+import eu.toolchain.exposr.taskmanager.SetupTask;
 
 public interface RefreshableProjectManager extends ProjectManager {
-    public TaskSetup<ProjectManagerRefreshed> refresh();
+    public SetupTask<ProjectManagerRefreshed> refresh();
 
     public ProjectManagerRefreshed refreshNow() throws ProjectException;
 }

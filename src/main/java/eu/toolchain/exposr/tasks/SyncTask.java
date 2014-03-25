@@ -4,7 +4,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-import lombok.Getter;
+import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 
 import org.apache.commons.io.FileUtils;
@@ -16,28 +16,16 @@ import eu.toolchain.exposr.project.Project;
 import eu.toolchain.exposr.project.ProjectException;
 import eu.toolchain.exposr.taskmanager.Task;
 import eu.toolchain.exposr.taskmanager.TaskState;
-import eu.toolchain.exposr.tasks.SyncTask.SyncResult;
 
 @Slf4j
-public class SyncTask implements Task<SyncResult> {
+@ToString(of = { "project", "path" })
+public class SyncTask implements Task<SyncTaskResult> {
     private final Project project;
-    private final Path buildPath;
+    private final Path path;
 
-    public static class SyncResult {
-        @Getter
-        private final boolean updated;
-        @Getter
-        private final ObjectId id;
-
-        public SyncResult(boolean updated, ObjectId id) {
-            this.updated = updated;
-            this.id = id;
-        }
-    }
-
-    public SyncTask(Project project, Path buildPath) {
+    public SyncTask(Project project, Path path) {
         this.project = project;
-        this.buildPath = buildPath;
+        this.path = path.toAbsolutePath().normalize();
     }
 
     private ObjectId fetch(Project project, Path buildPath, ObjectId remoteId)
@@ -53,42 +41,42 @@ public class SyncTask implements Task<SyncResult> {
     }
 
     @Override
-    public SyncResult run(TaskState state) throws Exception {
+    public SyncTaskResult run(TaskState state) throws Exception {
         final ObjectId remoteId = project.findRemoteId();
-        state.system("Synchronizing " + buildPath);
+        state.system("Synchronizing " + path);
 
         if (remoteId == null) {
             throw new ProjectException("Remote id not found for project: "
                     + project);
         }
 
-        if (!Files.isDirectory(buildPath)) {
-            state.system("Cloning to " + buildPath);
-            final ObjectId headId = clone(project, buildPath);
-            return new SyncResult(true, headId);
+        if (!Files.isDirectory(path)) {
+            state.system("Making fresh clone");
+            final ObjectId headId = clone(project, path);
+            return new SyncTaskResult(true, headId);
         }
 
         final Git git;
 
         try {
-            git = Git.open(buildPath.toFile());
+            git = Git.open(path.toFile());
         } catch (IOException e) {
             log.error("Failed to open local git repo", e);
 
-            if (Files.isDirectory(buildPath)) {
-                state.system("Cleaning " + buildPath);
+            if (Files.isDirectory(path)) {
+                state.system("Purging build path");
 
                 try {
-                    FileUtils.deleteDirectory(buildPath.toFile());
+                    FileUtils.deleteDirectory(path.toFile());
                 } catch (IOException io) {
                     throw new ProjectException(
-                            "Failed to clean up dirty repo: " + buildPath, io);
+                            "Failed to clean up dirty repo: " + path, io);
                 }
             }
 
-            state.system("Cloning to " + buildPath);
-            final ObjectId headId = clone(project, buildPath);
-            return new SyncResult(true, headId);
+            state.system("Making fresh clone");
+            final ObjectId headId = clone(project, path);
+            return new SyncTaskResult(true, headId);
         }
 
         final ObjectId newHeadId;
@@ -96,18 +84,18 @@ public class SyncTask implements Task<SyncResult> {
         try {
             newHeadId = git.getRepository().resolve(Constants.HEAD);
         } catch (IOException e) {
-            state.system("Fetching " + remoteId + " to " + buildPath);
-            final ObjectId headId = fetch(project, buildPath, remoteId);
-            return new SyncResult(true, headId);
+            state.system("Fetching remote " + remoteId);
+            final ObjectId headId = fetch(project, path, remoteId);
+            return new SyncTaskResult(true, headId);
         }
 
         if (newHeadId == null || !newHeadId.equals(remoteId)) {
-            state.system("Fetching " + remoteId + " to " + buildPath);
-            final ObjectId headId = fetch(project, buildPath, remoteId);
-            return new SyncResult(true, headId);
+            state.system("Fetching remote " + remoteId);
+            final ObjectId headId = fetch(project, path, remoteId);
+            return new SyncTaskResult(true, headId);
         }
 
-        state.system("Nothing has changed in " + buildPath);
-        return new SyncResult(false, newHeadId);
+        state.system("Nothing has changed");
+        return new SyncTaskResult(false, newHeadId);
     }
 }

@@ -5,7 +5,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
-import lombok.extern.slf4j.Slf4j;
+import lombok.ToString;
 
 import org.eclipse.jgit.lib.ObjectId;
 
@@ -18,7 +18,7 @@ import eu.toolchain.exposr.taskmanager.TaskState;
 import eu.toolchain.exposr.yaml.ExposrManifest;
 import eu.toolchain.exposr.yaml.ExposrManifestYAML;
 
-@Slf4j
+@ToString(of = { "builder", "publisher", "project", "buildPath" })
 public class BuildTask implements Task<Void> {
     public static final String EXPOSR_YML = ".exposr.yml";
 
@@ -37,18 +37,18 @@ public class BuildTask implements Task<Void> {
 
     @Override
     public Void run(TaskState state) throws Exception {
-        state.system("Building project in " + buildPath);
+        state.system("Starting build");
 
         final ObjectId head = project.getHead(buildPath);
 
-        final Path manifestFile = buildPath.resolve(EXPOSR_YML);
+        final Path manifestPath = buildPath.resolve(EXPOSR_YML);
 
-        if (!Files.isRegularFile(manifestFile)) {
-            throw new ProjectBuildException("Project has no '" + EXPOSR_YML
-                    + "' manifest");
+        if (!Files.isRegularFile(manifestPath)) {
+            throw new ProjectBuildException("Project has no manifest: "
+                    + manifestPath);
         }
 
-        final ExposrManifest manifest = ExposrManifestYAML.parse(manifestFile);
+        final ExposrManifest manifest = ExposrManifestYAML.parse(manifestPath);
 
         final List<Path> paths = new ArrayList<Path>();
 

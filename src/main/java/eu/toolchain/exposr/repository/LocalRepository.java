@@ -15,15 +15,15 @@ import eu.toolchain.exposr.project.Project;
 import eu.toolchain.exposr.project.manager.ProjectManager;
 import eu.toolchain.exposr.project.reporter.ProjectReporter;
 import eu.toolchain.exposr.publisher.Publisher;
-import eu.toolchain.exposr.taskmanager.TaskSetup;
-import eu.toolchain.exposr.taskmanager.TaskSetup.Handle;
+import eu.toolchain.exposr.taskmanager.SetupTask;
 import eu.toolchain.exposr.taskmanager.SetupTaskGroup;
+import eu.toolchain.exposr.taskmanager.Task;
 import eu.toolchain.exposr.taskmanager.TaskManager;
 import eu.toolchain.exposr.taskmanager.TaskSnapshot;
 import eu.toolchain.exposr.tasks.BuildTask;
 import eu.toolchain.exposr.tasks.DeployTask;
 import eu.toolchain.exposr.tasks.SyncTask;
-import eu.toolchain.exposr.tasks.SyncTask.SyncResult;
+import eu.toolchain.exposr.tasks.SyncTaskResult;
 
 @Slf4j
 @ToString(of = { "path" })
@@ -51,7 +51,7 @@ public class LocalRepository implements Repository {
         this.path = path;
     }
 
-    private final class SyncCallback implements Handle<SyncResult> {
+    private final class SyncCallback implements Task.Handle<SyncTaskResult> {
         private final Project project;
 
         public SyncCallback(Project project) {
@@ -59,7 +59,7 @@ public class LocalRepository implements Repository {
         }
 
         @Override
-        public void done(TaskSnapshot task, SyncResult result) {
+        public void done(TaskSnapshot task, SyncTaskResult result) {
             if (result.isUpdated()) {
                 build(project).parentId(task.getId()).execute();
             } else {
@@ -80,7 +80,7 @@ public class LocalRepository implements Repository {
         }
     }
 
-    private final class BuildCallback implements Handle<Void> {
+    private final class BuildCallback implements Task.Handle<Void> {
         private final Project project;
 
         public BuildCallback(Project project) {
@@ -99,7 +99,7 @@ public class LocalRepository implements Repository {
     }
 
     @Override
-    public TaskSetup<SyncResult> sync(final Project project) {
+    public SetupTask<SyncTaskResult> sync(final Project project) {
         final Path buildPath = path.resolve(project.getName());
         final SyncTask task = new SyncTask(project, buildPath);
         return taskManager.build("synchronize " + project, task).callback(
@@ -107,20 +107,20 @@ public class LocalRepository implements Repository {
     }
 
     @Override
-    public SetupTaskGroup<SyncResult> syncAll() {
+    public SetupTaskGroup<SyncTaskResult> syncAll() {
         log.info("Syncronizing All Projects");
 
-        final List<TaskSetup<SyncResult>> builders = new ArrayList<TaskSetup<SyncResult>>();
+        final List<SetupTask<SyncTaskResult>> builders = new ArrayList<SetupTask<SyncTaskResult>>();
 
         for (final Project project : projectManager.getProjects()) {
             builders.add(sync(project));
         }
 
-        return new SetupTaskGroup<SyncResult>(builders);
+        return new SetupTaskGroup<SyncTaskResult>(builders);
     }
 
     @Override
-    public TaskSetup<Void> build(Project project) {
+    public SetupTask<Void> build(Project project) {
         final Path buildPath = path.resolve(project.getName());
         final BuildTask task = new BuildTask(builder, publisher, project,
                 buildPath);
@@ -132,7 +132,7 @@ public class LocalRepository implements Repository {
     public SetupTaskGroup<Void> buildAll() {
         log.info("Building All Projects");
 
-        final List<TaskSetup<Void>> builders = new ArrayList<TaskSetup<Void>>();
+        final List<SetupTask<Void>> builders = new ArrayList<SetupTask<Void>>();
 
         for (final Project project : projectManager.getProjects()) {
             builders.add(build(project));
@@ -142,7 +142,7 @@ public class LocalRepository implements Repository {
     }
 
     @Override
-    public TaskSetup<Void> deploy(String name, String id,
+    public SetupTask<Void> deploy(String name, String id,
             InputStream inputStream) {
         final Path buildPath = path.resolve(name);
         final DeployTask task = new DeployTask(name, id, inputStream,

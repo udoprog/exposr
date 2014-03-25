@@ -32,15 +32,14 @@ import eu.toolchain.exposr.project.manager.RefreshableProjectManager;
 import eu.toolchain.exposr.project.reporter.ProjectReporter;
 import eu.toolchain.exposr.publisher.Publisher;
 import eu.toolchain.exposr.repository.Repository;
-import eu.toolchain.exposr.taskmanager.DefaultTaskManager;
+import eu.toolchain.exposr.taskmanager.SetupTask;
 import eu.toolchain.exposr.taskmanager.SetupTaskGroup;
 import eu.toolchain.exposr.taskmanager.SetupTaskGroup.TaskError;
 import eu.toolchain.exposr.taskmanager.SetupTaskGroup.TaskResult;
+import eu.toolchain.exposr.taskmanager.Task;
 import eu.toolchain.exposr.taskmanager.TaskManager;
-import eu.toolchain.exposr.taskmanager.TaskSetup;
 import eu.toolchain.exposr.taskmanager.TaskSnapshot;
-import eu.toolchain.exposr.tasks.SyncTask;
-import eu.toolchain.exposr.tasks.SyncTask.SyncResult;
+import eu.toolchain.exposr.tasks.SyncTaskResult;
 import eu.toolchain.exposr.yaml.ExposrConfig;
 import eu.toolchain.exposr.yaml.ValidationException;
 
@@ -83,8 +82,7 @@ public class Main extends GuiceServletContextListener {
                 bind(Builder.class).toInstance(config.getBuilder());
                 bind(ProjectReporter.class).toInstance(
                         config.getProjectReporter());
-                bind(TaskManager.class).to(DefaultTaskManager.class).in(
-                        Scopes.SINGLETON);
+                bind(TaskManager.class).in(Scopes.SINGLETON);
 
                 bind(ProjectManager.class).toInstance(
                         config.getProjectManager());
@@ -97,10 +95,10 @@ public class Main extends GuiceServletContextListener {
         final Repository repository = injector.getInstance(Repository.class);
 
         if (refreshable != null) {
-            final TaskSetup<ProjectManagerRefreshed> refresh = refreshable
+            final SetupTask<ProjectManagerRefreshed> refresh = refreshable
                     .refresh();
 
-            refresh.callback(new TaskSetup.Handle<ProjectManagerRefreshed>() {
+            refresh.callback(new Task.Handle<ProjectManagerRefreshed>() {
                 @Override
                 public void done(TaskSnapshot task,
                         ProjectManagerRefreshed value) {
@@ -108,10 +106,10 @@ public class Main extends GuiceServletContextListener {
                             .syncAll()
                             .parentId(task.getParentId())
                             .callback(
-                                    new SetupTaskGroup.Handle<SyncTask.SyncResult>() {
+                                    new SetupTaskGroup.Handle<SyncTaskResult>() {
                                         @Override
                                         public void done(
-                                                Collection<TaskResult<SyncResult>> results,
+                                                Collection<TaskResult<SyncTaskResult>> results,
                                                 Collection<TaskError> errors) {
                                             log.info("Everything synchronized: "
                                                     + results + ":" + errors);

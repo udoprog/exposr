@@ -8,6 +8,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import lombok.Getter;
+import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -20,6 +21,7 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 public class SetupTaskGroup<T> {
+    @ToString(of = { "task", "value" })
     public static class TaskResult<T> {
         @Getter
         private final TaskSnapshot task;
@@ -33,6 +35,7 @@ public class SetupTaskGroup<T> {
         }
     }
 
+    @ToString(of = { "task", "error" })
     public static class TaskError {
         @Getter
         private final TaskSnapshot task;
@@ -51,7 +54,7 @@ public class SetupTaskGroup<T> {
                 Collection<TaskError> errors);
     }
 
-    private final List<TaskSetup<T>> builders;
+    private final List<SetupTask<T>> builders;
 
     private final AtomicInteger count;
     private final List<Handle<T>> handles = new LinkedList<Handle<T>>();
@@ -59,12 +62,12 @@ public class SetupTaskGroup<T> {
     private final ConcurrentLinkedQueue<TaskResult<T>> results = new ConcurrentLinkedQueue<TaskResult<T>>();
     private final ConcurrentLinkedQueue<TaskError> errors = new ConcurrentLinkedQueue<TaskError>();
 
-    public SetupTaskGroup(List<TaskSetup<T>> builders) {
+    public SetupTaskGroup(List<SetupTask<T>> builders) {
         this.builders = builders;
         this.count = new AtomicInteger(builders.size());
 
-        for (TaskSetup<T> builder : builders) {
-            builder.callback(new TaskSetup.Handle<T>() {
+        for (SetupTask<T> builder : builders) {
+            builder.callback(new Task.Handle<T>() {
                 @Override
                 public void done(TaskSnapshot task, T value) {
                     results.add(new TaskResult<T>(task, value));
@@ -96,7 +99,7 @@ public class SetupTaskGroup<T> {
     }
 
     public SetupTaskGroup<T> parentId(Long parentId) {
-        for (TaskSetup<T> builder : builders) {
+        for (SetupTask<T> builder : builders) {
             builder.parentId(parentId);
         }
 
@@ -111,7 +114,7 @@ public class SetupTaskGroup<T> {
             return ids;
         }
 
-        for (TaskSetup<T> builder : builders) {
+        for (SetupTask<T> builder : builders) {
             ids.add(builder.execute());
         }
 

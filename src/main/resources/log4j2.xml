@@ -5,7 +5,7 @@
       <PatternLayout pattern="%d{HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n"/>
     </Console>
     <Console name="tasks" target="SYSTEM_OUT">
-      <PatternLayout pattern="%d{HH:mm:ss.SSS} %-5level %logger{36} - %msg%n"/>
+      <PatternLayout pattern="%d{HH:mm:ss.SSS} %-5level %logger{36} %msg%n"/>
     </Console>
   </Appenders> 
   <Loggers>

@@ -18,8 +18,8 @@ import org.eclipse.egit.github.core.service.RepositoryService;
 import eu.toolchain.exposr.project.Project;
 import eu.toolchain.exposr.project.ProjectAuth;
 import eu.toolchain.exposr.project.ProjectException;
+import eu.toolchain.exposr.taskmanager.SetupTask;
 import eu.toolchain.exposr.taskmanager.TaskManager;
-import eu.toolchain.exposr.taskmanager.TaskSetup;
 import eu.toolchain.exposr.tasks.RefreshTask;
 
 @Slf4j
@@ -53,14 +53,12 @@ public class GithubProjectManager implements RefreshableProjectManager {
     }
 
     @Override
-    public TaskSetup<ProjectManagerRefreshed> refresh() {
+    public SetupTask<ProjectManagerRefreshed> refresh() {
         return taskManager.build("refresh " + this, new RefreshTask(this));
     }
 
     @Override
     public ProjectManagerRefreshed refreshNow() throws ProjectException {
-        log.info("Fetching Projects");
-
         final RepositoryService service = new RepositoryService(client);
 
         final List<Repository> repositories;

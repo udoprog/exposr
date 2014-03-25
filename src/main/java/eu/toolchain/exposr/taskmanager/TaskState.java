@@ -55,10 +55,13 @@ public final class TaskState {
         }
     }
 
+    TaskSnapshot end() {
+        return end(null);
+    }
+
     TaskSnapshot end(Throwable error) {
-        if (handlers.isEmpty()) {
+        if (handlers.isEmpty())
             return snapshot(new Date(), error);
-        }
 
         for (Handle handle : handlers) {
             try {
@@ -73,17 +76,17 @@ public final class TaskState {
     }
 
     public void system(String line) {
-        SYS.info(id + ": " + line);
+        SYS.info(String.format("ID[%05d] %s", id, line));
         write(new TaskOutput(TaskOutputType.SYS, line));
     }
 
     public void output(String line) {
-        OUT.info(id + ": " + line);
+        OUT.info(String.format("ID[%05d] %s", id, line));
         write(new TaskOutput(TaskOutputType.OUT, line));
     }
 
     public void error(String line) {
-        ERR.info(id + ": " + line);
+        ERR.info(String.format("ID[%05d] %s", id, line));
         write(new TaskOutput(TaskOutputType.ERR, line));
     }
 

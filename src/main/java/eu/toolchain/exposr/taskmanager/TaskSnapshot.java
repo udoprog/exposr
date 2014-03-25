@@ -4,12 +4,15 @@ import java.util.Date;
 import java.util.List;
 
 import lombok.Getter;
+import lombok.ToString;
 
 /**
  * An immutable snapshot of TaskState.
  * 
  * @author udoprog
  */
+@ToString(of = { "id", "title", "started", "ended", "parentId", "error",
+        "duration" })
 public final class TaskSnapshot {
     @Getter
     final long id;

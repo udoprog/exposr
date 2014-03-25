@@ -14,6 +14,8 @@ import eu.toolchain.exposr.yaml.ExposrManifest;
 @Slf4j
 @ToString
 public class LocalBuilder implements Builder {
+    private static String BIN_SH = "/bin/sh";
+
     @Override
     public void execute(final Project project, final ExposrManifest manifest,
             final Path buildPath, final TaskState state)
@@ -21,7 +23,7 @@ public class LocalBuilder implements Builder {
         for (final String command : manifest.getCommands()) {
             state.system("RUN: " + command);
 
-            final String[] parts = command.split(" ");
+            final String[] parts = new String[] { BIN_SH, "-c", command };
 
             final ProcessBuilder builder = new ProcessBuilder()
                     .redirectOutput(Redirect.PIPE).redirectError(Redirect.PIPE)
