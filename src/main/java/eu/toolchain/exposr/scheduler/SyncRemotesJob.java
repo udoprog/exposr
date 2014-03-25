@@ -1,10 +1,10 @@
 package eu.toolchain.exposr.scheduler;
 
+import javax.inject.Inject;
+
 import org.quartz.Job;
 import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
-
-import javax.inject.Inject;
 
 import eu.toolchain.exposr.repository.Repository;
 

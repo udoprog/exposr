@@ -2,7 +2,9 @@ package eu.toolchain.exposr.project.manager;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import javax.inject.Inject;
 
@@ -16,32 +18,22 @@ import org.eclipse.egit.github.core.service.RepositoryService;
 import eu.toolchain.exposr.project.Project;
 import eu.toolchain.exposr.project.ProjectAuth;
 import eu.toolchain.exposr.project.ProjectException;
-import eu.toolchain.exposr.taskmanager.DefaultTaskManager;
-import eu.toolchain.exposr.taskmanager.HandleBuilder;
-import eu.toolchain.exposr.taskmanager.HandleBuilder.OnDone;
-import eu.toolchain.exposr.taskmanager.Handlers;
-import eu.toolchain.exposr.taskmanager.Task;
-import eu.toolchain.exposr.taskmanager.TaskSnapshot;
-import eu.toolchain.exposr.taskmanager.TaskState;
+import eu.toolchain.exposr.taskmanager.TaskManager;
+import eu.toolchain.exposr.taskmanager.TaskSetup;
+import eu.toolchain.exposr.tasks.RefreshTask;
 
 @Slf4j
 @ToString(of = { "user", "remoteName" })
 public class GithubProjectManager implements RefreshableProjectManager {
-    private class RefreshTask implements Task<List<Project>> {
-        @Override
-        public List<Project> run(TaskState state) throws Exception {
-            return GithubProjectManager.this.fetchProjects();
-        }
-    }
-
     private final GitHubClient client;
     private final String user;
     private final String remoteName;
     private final ProjectAuth auth;
-    private List<Project> projects = new ArrayList<Project>();
+
+    private Set<Project> projects = new HashSet<Project>();
 
     @Inject
-    private DefaultTaskManager taskManager;
+    private TaskManager taskManager;
 
     public GithubProjectManager(String apiUrl, String user, String remoteName,
             ProjectAuth auth) {
@@ -56,30 +48,17 @@ public class GithubProjectManager implements RefreshableProjectManager {
     }
 
     @Override
-    public HandleBuilder<Void> refresh() {
-        final RefreshTask task = new RefreshTask();
-        
-        final HandleBuilder<List<Project>> builder = taskManager.build(
-                "refresh " + this, task);
-
-        builder.done(new OnDone<List<Project>>() {
-            @Override
-            public void done(TaskSnapshot snapshot, List<Project> value) {
-                synchronized (projects) {
-                    projects = value;
-                }
-            }
-        });
-
-        return Handlers.<List<Project>, Void> adapter(builder);
+    public synchronized List<Project> getProjects() {
+        return new ArrayList<Project>(projects);
     }
 
     @Override
-    public synchronized List<Project> getProjects() {
-        return projects;
+    public TaskSetup<ProjectManagerRefreshed> refresh() {
+        return taskManager.build("refresh " + this, new RefreshTask(this));
     }
 
-    public List<Project> fetchProjects() throws ProjectException {
+    @Override
+    public ProjectManagerRefreshed refreshNow() throws ProjectException {
         log.info("Fetching Projects");
 
         final RepositoryService service = new RepositoryService(client);
@@ -92,14 +71,23 @@ public class GithubProjectManager implements RefreshableProjectManager {
             throw new ProjectException("Failed to list repositories", e);
         }
 
-        final List<Project> projects = new ArrayList<Project>();
+        final Set<Project> newProjects = new HashSet<Project>();
 
         for (final Repository repository : repositories) {
-            projects.add(new Project(repository.getName(), repository
-                    .getCloneUrl(), remoteName, auth));
+            final Project newProject = new Project(repository.getName(),
+                    repository.getCloneUrl(), remoteName, auth);
+
+            newProjects.add(newProject);
         }
 
-        return projects;
+        synchronized (this) {
+            final boolean changed = !this.projects.containsAll(newProjects);
+
+            if (changed)
+                this.projects = newProjects;
+
+            return new ProjectManagerRefreshed(changed);
+        }
     }
 
     @Override

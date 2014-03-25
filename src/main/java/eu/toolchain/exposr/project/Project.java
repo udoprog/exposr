@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Collection;
 
+import lombok.EqualsAndHashCode;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 
@@ -19,7 +20,8 @@ import org.eclipse.jgit.lib.Ref;
 import org.eclipse.jgit.transport.RefSpec;
 
 @Slf4j
-@ToString(of = { "name", "cloneUrl", "remoteRef" })
+@ToString(of = { "name", "url", "ref" })
+@EqualsAndHashCode(of = { "name", "url", "ref" })
 public class Project {
     private final String name;
     private final String url;
@@ -45,8 +47,8 @@ public class Project {
     private ObjectId realFindRemoteRef() throws ProjectException {
         final Collection<Ref> remoteRefs;
 
-        final LsRemoteCommand lsRemote = Git.lsRemoteRepository().setRemote(
-                url);
+        final LsRemoteCommand lsRemote = Git.lsRemoteRepository()
+                .setRemote(url);
 
         if (auth != null)
             lsRemote.setCredentialsProvider(auth.build());
@@ -148,8 +150,7 @@ public class Project {
         log.info(this + ": Cloning to: " + directory);
 
         final CloneCommand cloneCommand = Git.cloneRepository()
-                .setDirectory(directory.toFile()).setURI(url)
-                .setBranch(ref);
+                .setDirectory(directory.toFile()).setURI(url).setBranch(ref);
 
         if (auth != null)
             cloneCommand.setCredentialsProvider(auth.build());

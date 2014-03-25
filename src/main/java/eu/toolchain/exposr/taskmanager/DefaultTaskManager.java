@@ -1,7 +1,6 @@
 package eu.toolchain.exposr.taskmanager;
 
 import java.util.ArrayList;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -9,126 +8,39 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import lombok.extern.slf4j.Slf4j;
-import eu.toolchain.exposr.taskmanager.HandleBuilder.OnDone;
-import eu.toolchain.exposr.taskmanager.HandleBuilder.OnError;
+import eu.toolchain.exposr.taskmanager.TaskSetup.OnDone;
+import eu.toolchain.exposr.taskmanager.TaskSetup.OnError;
 
 @Slf4j
 public class DefaultTaskManager implements TaskManager {
-    final ExecutorService executorService = Executors.newFixedThreadPool(10);
+    private final ExecutorService executorService = Executors
+            .newFixedThreadPool(10);
 
     private long id = 0;
 
     private final Map<Long, TaskState> pending = new ConcurrentHashMap<Long, TaskState>();
     private final Map<Long, TaskSnapshot> finished = new ConcurrentHashMap<Long, TaskSnapshot>();
 
-    private static final class TaskTracker<T> implements Runnable {
-        private final DefaultTaskManager manager;
-        private final TaskState state;
-        private final Task<T> task;
-        private final List<OnDone<T>> done;
-        private final List<OnError> error;
-
-        public TaskTracker(DefaultTaskManager manager, TaskState state,
-                Task<T> task,
-                List<OnDone<T>> done, List<OnError> error) {
-            this.manager = manager;
-            this.state = state;
-            this.task = task;
-            this.done = done;
-            this.error = error;
-        }
-
-        @Override
-        public void run() {
-            this.state.start();
-
-            final T result;
-
-            try {
-                result = this.task.run(state);
-            } catch (Throwable t) {
-                final TaskSnapshot snapshot = this.state.end(t);
-                this.manager.end(this.state.getId(), snapshot);
-
-                for (OnError callback : error) {
-                    try {
-                        callback.error(snapshot, t);
-                    } catch (Throwable t2) {
-                        log.error("Error when invoking 'error' callback", t2);
-                    }
-                }
-
-                return;
-            }
-
-            final TaskSnapshot snapshot = this.state.end(null);
-            this.manager.end(this.state.getId(), snapshot);
-
-            for (OnDone<T> callback : done) {
-                try {
-                    callback.done(snapshot, result);
-                } catch (Throwable t) {
-                    log.error("Error when invoking 'done' callback", t);
-                }
-            }
-        }
-    }
-
-    public static class DefaultHandleBuilder<T> implements HandleBuilder<T> {
-        private final DefaultTaskManager manager;
-        private final String title;
-        private final Task<T> task;
-        private final List<OnDone<T>> done = new LinkedList<OnDone<T>>();
-        private final List<OnError> error = new LinkedList<OnError>();
-
-        public DefaultHandleBuilder(DefaultTaskManager manager, String title,
-                Task<T> task) {
-            this.manager = manager;
-            this.title = title;
-            this.task = task;
-        }
-
-        @Override
-        public HandleBuilder<T> callback(Handle<T> callback) {
-            done.add(callback);
-            error.add(callback);
-            return this;
-        }
-
-        @Override
-        public HandleBuilder<T> done(OnDone<T> callback) {
-            done.add(callback);
-            return this;
-        }
-
-        @Override
-        public HandleBuilder<T> error(OnError callback) {
-            error.add(callback);
-            return this;
-        }
-
-        @Override
-        public long execute() {
-            return manager.execute(title, task, done, error);
-        }
-    }
-
-    /* (non-Javadoc)
-     * @see eu.toolchain.exposr.taskmanager.TaskManager#build(java.lang.String, eu.toolchain.exposr.taskmanager.Task)
+    /*
+     * (non-Javadoc)
+     * 
+     * @see eu.toolchain.exposr.taskmanager.TaskManager#build(java.lang.String,
+     * eu.toolchain.exposr.taskmanager.Task)
      */
     @Override
-    public <T> DefaultHandleBuilder<T> build(String title, Task<T> task) {
-        return new DefaultHandleBuilder<T>(this, title, task);
+    public <T> TaskSetup<T> build(String title, Task<T> task) {
+        return new TaskSetup<T>(this, title, task);
     }
 
-    private <T> long execute(String title, Task<T> task, List<OnDone<T>> done,
-            List<OnError> error) {
+    @Override
+    public <T> long execute(String title, Task<T> task, List<OnDone<T>> done,
+            List<OnError> error, Long parentId) {
         final long taskId;
         final TaskState state;
 
         synchronized (pending) {
             taskId = this.id++;
-            state = new TaskState(taskId, title);
+            state = new TaskState(taskId, title, parentId);
             pending.put(taskId, state);
         }
 
@@ -137,20 +49,30 @@ public class DefaultTaskManager implements TaskManager {
         }
 
         final TaskTracker<T> tracker = new TaskTracker<T>(this, state, task,
-                done,
-                error);
+                done, error);
 
         executorService.execute(tracker);
 
         return taskId;
     }
 
-    private void end(long id, final TaskSnapshot snapshot) {
+    /**
+     * End the task with the specific id.
+     * 
+     * @param id
+     *            Id of the task to end.
+     * @param snapshot
+     *            Snapshot state of the ended task.
+     */
+    @Override
+    public void end(long id, final TaskSnapshot snapshot) {
         finished.put(id, snapshot);
         pending.remove(id);
     }
 
-    /* (non-Javadoc)
+    /*
+     * (non-Javadoc)
+     * 
      * @see eu.toolchain.exposr.taskmanager.TaskManager#get(long)
      */
     @Override
@@ -181,7 +103,9 @@ public class DefaultTaskManager implements TaskManager {
         return state.subscriber();
     }
 
-    /* (non-Javadoc)
+    /*
+     * (non-Javadoc)
+     * 
      * @see eu.toolchain.exposr.taskmanager.TaskManager#getAll()
      */
     @Override

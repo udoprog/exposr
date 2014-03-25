@@ -34,6 +34,8 @@ public final class TaskState {
     private final long id;
     @Getter
     private final String title;
+    @Getter
+    private final Long parentId;
 
     private Date started;
 
@@ -41,9 +43,10 @@ public final class TaskState {
             .newSetFromMap(new ConcurrentHashMap<Handle, Boolean>());
     private final Queue<TaskOutput> output = new ConcurrentLinkedQueue<TaskOutput>();
 
-    public TaskState(long id, String title) {
+    public TaskState(long id, String title, Long parentId) {
         this.id = id;
         this.title = title;
+        this.parentId = parentId;
     }
 
     void start() {
@@ -105,7 +108,8 @@ public final class TaskState {
         final List<TaskOutput> output = new ArrayList<TaskOutput>(this.output);
 
         synchronized (this) {
-            return new TaskSnapshot(id, title, started, ended, error, output);
+            return new TaskSnapshot(id, title, started, parentId, ended, error,
+                    output);
         }
     }
 

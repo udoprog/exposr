@@ -12,7 +12,10 @@
     <Logger name="Task" level="INFO" additivity="false">
       <AppenderRef ref="tasks" />
     </Logger>
-    <Root level="WARN">
+    <Logger name="eu.toolchain.exposr" level="DEBUG" additivity="false">
+      <AppenderRef ref="primary" />
+    </Logger>
+    <Root level="INFO">
       <AppenderRef ref="primary" />
     </Root>
   </Loggers>

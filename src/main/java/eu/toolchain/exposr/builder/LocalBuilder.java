@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.lang.ProcessBuilder.Redirect;
 import java.nio.file.Path;
 
+import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 import eu.toolchain.exposr.project.Project;
 import eu.toolchain.exposr.taskmanager.StreamReader;
@@ -11,13 +12,14 @@ import eu.toolchain.exposr.taskmanager.TaskState;
 import eu.toolchain.exposr.yaml.ExposrManifest;
 
 @Slf4j
+@ToString
 public class LocalBuilder implements Builder {
     @Override
     public void execute(final Project project, final ExposrManifest manifest,
             final Path buildPath, final TaskState state)
             throws ProjectBuildException {
         for (final String command : manifest.getCommands()) {
-            log.info(project + ": execute: " + command);
+            state.system("RUN: " + command);
 
             final String[] parts = command.split(" ");
 
@@ -30,6 +32,7 @@ public class LocalBuilder implements Builder {
             try {
                 p = builder.start();
             } catch (IOException e) {
+                state.system("ERROR: " + e.getMessage());
                 throw new ProjectBuildException("Failed to run command: "
                         + command, e);
             }
@@ -38,7 +41,7 @@ public class LocalBuilder implements Builder {
                     new StreamReader.Handle() {
                         @Override
                         public void line(String line) {
-                            state.error(line);
+                            state.output(line);
                         }
                     });
 
@@ -58,9 +61,12 @@ public class LocalBuilder implements Builder {
             try {
                 status = p.waitFor();
             } catch (InterruptedException e) {
+                state.system("ERROR: Interrupted: " + e.getMessage());
                 throw new ProjectBuildException("Command interrupted: "
                         + command, e);
             }
+
+            state.system("EXIT: Status: " + status);
 
             try {
                 stdout.join();

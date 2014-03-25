@@ -39,6 +39,12 @@ public final class Utils {
         }
     }
 
+    public static Path toPath(String context, String path)
+            throws ValidationException {
+        notEmpty(context, path);
+        return Paths.get(path);
+    }
+
     public static Path toDirectory(String context, String path)
             throws ValidationException {
         notEmpty(context, path);
@@ -58,7 +64,7 @@ public final class Utils {
 
         return list;
     }
-    
+
     public static TypeDescription makeType(Class<?> clazz) {
         final Field field;
 

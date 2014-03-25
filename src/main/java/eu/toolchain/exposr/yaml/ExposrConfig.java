@@ -8,7 +8,7 @@ import java.nio.file.Path;
 
 import lombok.Getter;
 import lombok.Setter;
-import lombok.extern.slf4j.Slf4j;
+import lombok.ToString;
 
 import org.yaml.snakeyaml.TypeDescription;
 import org.yaml.snakeyaml.Yaml;
@@ -28,7 +28,8 @@ import eu.toolchain.exposr.publisher.RemotePublisherYAML;
 import eu.toolchain.exposr.repository.LocalRepositoryYAML;
 import eu.toolchain.exposr.repository.Repository;
 
-@Slf4j
+@ToString(of = { "projectManager", "repository", "publisher", "builder",
+        "projectReporter" })
 public class ExposrConfig {
     @Getter
     @Setter

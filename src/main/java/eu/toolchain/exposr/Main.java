@@ -4,7 +4,9 @@ import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 import javax.ws.rs.core.UriBuilder;
@@ -25,15 +27,20 @@ import com.google.inject.servlet.GuiceServletContextListener;
 
 import eu.toolchain.exposr.builder.Builder;
 import eu.toolchain.exposr.project.manager.ProjectManager;
+import eu.toolchain.exposr.project.manager.ProjectManagerRefreshed;
 import eu.toolchain.exposr.project.manager.RefreshableProjectManager;
 import eu.toolchain.exposr.project.reporter.ProjectReporter;
 import eu.toolchain.exposr.publisher.Publisher;
 import eu.toolchain.exposr.repository.Repository;
 import eu.toolchain.exposr.taskmanager.DefaultTaskManager;
-import eu.toolchain.exposr.taskmanager.HandleBuilder;
-import eu.toolchain.exposr.taskmanager.HandleBuilder.Handle;
+import eu.toolchain.exposr.taskmanager.SetupTaskGroup;
+import eu.toolchain.exposr.taskmanager.SetupTaskGroup.TaskError;
+import eu.toolchain.exposr.taskmanager.SetupTaskGroup.TaskResult;
 import eu.toolchain.exposr.taskmanager.TaskManager;
+import eu.toolchain.exposr.taskmanager.TaskSetup;
 import eu.toolchain.exposr.taskmanager.TaskSnapshot;
+import eu.toolchain.exposr.tasks.SyncTask;
+import eu.toolchain.exposr.tasks.SyncTask.SyncResult;
 import eu.toolchain.exposr.yaml.ExposrConfig;
 import eu.toolchain.exposr.yaml.ValidationException;
 
@@ -42,60 +49,85 @@ public class Main extends GuiceServletContextListener {
     public static final String EXPOSR_CONFIG = "exposr.yaml";
 
     public static Injector injector;
-    private static ExposrConfig config;
-    private static final Object shutdownHook = new Object();
 
     @Override
     protected Injector getInjector() {
-        log.info("Building Guice Injector");
+        return injector;
+    }
+
+    private static Injector setupInjector(final ExposrConfig config,
+            final CountDownLatch shutdown) {
+        log.info("Building guice injector using config = " + config);
 
         final List<Module> modules = new ArrayList<Module>();
 
         final SchedulerModule.Config schedulerConfig = new SchedulerModule.Config();
 
+        final RefreshableProjectManager refreshable;
+
+        if (config.getProjectManager() instanceof RefreshableProjectManager) {
+            refreshable = (RefreshableProjectManager) config
+                    .getProjectManager();
+        } else {
+            refreshable = null;
+        }
+
         modules.add(new AbstractModule() {
             @Override
             protected void configure() {
+                bind(CountDownLatch.class).annotatedWith(
+                        Names.named("shutdown")).toInstance(shutdown);
+
                 bind(Repository.class).toInstance(config.getRepository());
-                bind(ProjectManager.class).toInstance(
-                        config.getProjectManager());
                 bind(Publisher.class).toInstance(config.getPublisher());
                 bind(Builder.class).toInstance(config.getBuilder());
                 bind(ProjectReporter.class).toInstance(
                         config.getProjectReporter());
-                bind(Object.class).annotatedWith(Names.named("shutdownHook"))
-                        .toInstance(shutdownHook);
                 bind(TaskManager.class).to(DefaultTaskManager.class).in(
                         Scopes.SINGLETON);
+
+                bind(ProjectManager.class).toInstance(
+                        config.getProjectManager());
             }
         });
-        modules.add(new SchedulerModule(schedulerConfig, config
-                .getProjectManager() instanceof RefreshableProjectManager));
+        modules.add(new SchedulerModule(schedulerConfig, refreshable != null));
 
         injector = Guice.createInjector(modules);
 
-        final ProjectManager projectManager = config.getProjectManager();
-        final Repository repository = config.getRepository();
+        final Repository repository = injector.getInstance(Repository.class);
 
-        if (projectManager instanceof RefreshableProjectManager) {
-            final HandleBuilder<Void> refresh = RefreshableProjectManager.class
-                    .cast(projectManager).refresh();
-    
-            if (refresh != null) {
-                refresh.callback(new Handle<Void>() {
-                    @Override
-                    public void done(TaskSnapshot task, Void value) {
-                        repository.syncAll();
-                    }
-    
-                    @Override
-                    public void error(TaskSnapshot task, Throwable t) {
-                        log.error("Initial refresh failed", t);
-                    }
-                }).execute();
-            }
+        if (refreshable != null) {
+            final TaskSetup<ProjectManagerRefreshed> refresh = refreshable
+                    .refresh();
+
+            refresh.callback(new TaskSetup.Handle<ProjectManagerRefreshed>() {
+                @Override
+                public void done(TaskSnapshot task,
+                        ProjectManagerRefreshed value) {
+                    repository
+                            .syncAll()
+                            .parentId(task.getParentId())
+                            .callback(
+                                    new SetupTaskGroup.Handle<SyncTask.SyncResult>() {
+                                        @Override
+                                        public void done(
+                                                Collection<TaskResult<SyncResult>> results,
+                                                Collection<TaskError> errors) {
+                                            log.info("Everything synchronized: "
+                                                    + results + ":" + errors);
+                                        }
+                                    }).execute();
+                }
+
+                @Override
+                public void error(TaskSnapshot task, Throwable t) {
+                    log.error("Initial refresh failed", t);
+                }
+            });
+
+            refresh.execute();
         } else {
-            repository.syncAll();
+            repository.syncAll().execute();
         }
 
         return injector;
@@ -109,6 +141,8 @@ public class Main extends GuiceServletContextListener {
         } else {
             configPath = args[0];
         }
+
+        final ExposrConfig config;
 
         try {
             config = ExposrConfig.parse(Paths.get(configPath));
@@ -125,50 +159,33 @@ public class Main extends GuiceServletContextListener {
         }
 
         final GrizzlyServer grizzlyServer = new GrizzlyServer();
-        final HttpServer server;
-
-        final Thread hook = new Thread(new Runnable() {
-            @Override
-            public void run() {
-                log.warn("Shutdown Hook Invoked");
-
-                synchronized (shutdownHook) {
-                    shutdownHook.notifyAll();
-                }
-            }
-        });
-
-        Runtime.getRuntime().addShutdownHook(hook);
-
         final URI baseUri = UriBuilder.fromUri("http://127.0.0.1/").port(8080)
                 .build();
 
-        synchronized (shutdownHook) {
-            try {
-                server = grizzlyServer.start(baseUri);
-            } catch (IOException e) {
-                log.error("Failed to start grizzly server", e);
-                System.exit(1);
-                return;
-            }
+        final CountDownLatch shutdown = new CountDownLatch(1);
 
-            try {
-                shutdownHook.wait();
-            } catch (InterruptedException e) {
-                log.error("Shutdown hook interrupted");
-            }
-        }
-
-        try {
-            Runtime.getRuntime().removeShutdownHook(hook);
-        } catch (IllegalStateException e) {
-            log.error("Could not remove shutdown hook", e);
-        }
+        injector = setupInjector(config, shutdown);
 
         final Scheduler scheduler = injector.getInstance(Scheduler.class);
 
+        final HttpServer server;
+
+        try {
+            server = grizzlyServer.start(baseUri);
+        } catch (IOException e) {
+            log.error("Failed to start grizzly server", e);
+            System.exit(1);
+            return;
+        }
+
+        try {
+            shutdown.await();
+        } catch (InterruptedException e) {
+            log.error("Shutdown hook interrupted", e);
+        }
+
         log.warn("Shutting down scheduler");
-        
+
         try {
             scheduler.shutdown(true);
         } catch (SchedulerException e) {
@@ -181,7 +198,7 @@ public class Main extends GuiceServletContextListener {
         } catch (Exception e) {
             log.error("Server shutdown failed", e);
         }
-        
+
         log.warn("Bye Bye!");
         System.exit(0);
     }

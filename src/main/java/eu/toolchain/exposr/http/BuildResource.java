@@ -19,6 +19,7 @@ public class BuildResource {
 
     @POST
     public Response buildAll(@Context UriInfo info) {
-        return TaskResource.tasksCreated(info, localRepository.buildAll());
+        return TaskResource.tasksCreated(info, localRepository.buildAll()
+                .execute());
     }
 }

@@ -100,8 +100,7 @@ public class ProjectResource {
             this.error = error == null ? null : error.toString();
         }
 
-        public static BuildResponse build(UriInfo info,
-                ProjectBuild build) {
+        public static BuildResponse build(UriInfo info, ProjectBuild build) {
             if (build == null)
                 return null;
 
@@ -172,11 +171,9 @@ public class ProjectResource {
             final ProjectResponse status = new ProjectResponse();
             status.setName(project.getName());
             status.setLastSync(SyncResponse.build(info,
-                    projectReporter
-                    .getLastSync(project)));
+                    projectReporter.getLastSync(project)));
             status.setLastBuild(BuildResponse.build(info,
-                    projectReporter
-                    .getLastBuild(project)));
+                    projectReporter.getLastBuild(project)));
             response.add(status);
         }
 
@@ -191,8 +188,7 @@ public class ProjectResource {
 
         final ProjectDetailedResponse status = new ProjectDetailedResponse();
         status.setName(p.getName());
-        status.setSyncs(SyncResponse.buildAll(info,
-                projectReporter.getSyncs(p)));
+        status.setSyncs(SyncResponse.buildAll(info, projectReporter.getSyncs(p)));
         status.setBuilds(BuildResponse.buildAll(info,
                 projectReporter.getBuilds(p)));
 
@@ -205,7 +201,7 @@ public class ProjectResource {
             @Context UriInfo info) throws Exception {
         final Project p = ProjectResource.getProjectByName(projectManager,
                 project);
-        long id = localRepository.sync(p);
+        long id = localRepository.sync(p).execute();
         return TaskResource.taskCreated(info, id);
     }
 
@@ -215,7 +211,7 @@ public class ProjectResource {
             @Context UriInfo info) throws Exception {
         final Project p = ProjectResource.getProjectByName(projectManager,
                 project);
-        final long id = localRepository.build(p);
+        final long id = localRepository.build(p).execute();
         return TaskResource.taskCreated(info, id);
     }
 

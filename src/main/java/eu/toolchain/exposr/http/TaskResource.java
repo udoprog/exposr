@@ -12,6 +12,7 @@ import javax.ws.rs.NotFoundException;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
@@ -43,35 +44,38 @@ public class TaskResource {
             this.output = output;
         }
     }
-    
+
     public static class TaskSnapshotResponse {
         @Getter
         final long id;
-        
+
         @Getter
         final String title;
-        
+
         @Getter
         final private Date started;
-        
+
         @Getter
         final private Date ended;
-        
+
         @Getter
         final private List<String> errors;
-        
+
         @Getter
         final private List<TaskOutput> output;
-        
+
         @Getter
         final private long duration;
 
         @Getter
         final private boolean success;
 
+        @Getter
+        final TaskResponse parent;
+
         public TaskSnapshotResponse(long id, String title, Date started,
                 Date ended, List<String> errors, List<TaskOutput> output,
-                long elapsed, boolean success) {
+                long elapsed, boolean success, TaskResponse parent) {
             this.id = id;
             this.title = title;
             this.started = started;
@@ -80,6 +84,7 @@ public class TaskResource {
             this.output = output;
             this.duration = elapsed;
             this.success = success;
+            this.parent = parent;
         }
 
         public static List<String> makeErrors(Throwable t) {
@@ -96,15 +101,24 @@ public class TaskResource {
             return errors;
         }
 
-        public static TaskSnapshotResponse build(TaskSnapshot task) {
+        public static TaskSnapshotResponse build(UriInfo info, TaskSnapshot task) {
             final List<String> errors = makeErrors(task.getError());
+
+            final TaskResponse parentTask;
+
+            if (task.getParentId() != null) {
+                parentTask = task(info, task.getParentId());
+            } else {
+                parentTask = null;
+            }
+
             final boolean success = task.getError() == null;
             return new TaskSnapshotResponse(task.getId(), task.getTitle(),
                     task.getStarted(), task.getEnded(), errors,
-                    task.getOutput(), task.getDuration(), success);
+                    task.getOutput(), task.getDuration(), success, parentTask);
         }
 
-        public static List<TaskSnapshotResponse> buildAll(
+        public static List<TaskSnapshotResponse> buildAll(UriInfo info,
                 List<TaskSnapshot> tasks) {
             final List<TaskSnapshotResponse> result = new ArrayList<TaskSnapshotResponse>();
 
@@ -112,7 +126,7 @@ public class TaskResource {
                 return result;
 
             for (TaskSnapshot task : tasks) {
-                result.add(build(task));
+                result.add(build(info, task));
             }
 
             return result;
@@ -120,20 +134,21 @@ public class TaskResource {
     }
 
     @GET
-    public List<TaskSnapshotResponse> allTasks() {
-        return TaskSnapshotResponse.buildAll(taskManager.getAll());
+    public List<TaskSnapshotResponse> allTasks(@Context UriInfo info) {
+        return TaskSnapshotResponse.buildAll(info, taskManager.getAll());
     }
 
     @GET
     @Path("/{id}")
-    public TaskSnapshotResponse getTask(@PathParam("id") long id) {
+    public TaskSnapshotResponse getTask(@Context UriInfo info,
+            @PathParam("id") long id) {
         final TaskSnapshot task = taskManager.get(id);
 
         if (task == null) {
             throw new NotFoundException("No task with id: " + id);
         }
 
-        return TaskSnapshotResponse.build(task);
+        return TaskSnapshotResponse.build(info, task);
     }
 
     @GET

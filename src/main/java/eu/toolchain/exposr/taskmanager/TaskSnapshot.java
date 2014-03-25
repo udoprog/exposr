@@ -24,6 +24,9 @@ public final class TaskSnapshot {
     final private Date ended;
 
     @Getter
+    final Long parentId;
+
+    @Getter
     final private Throwable error;
 
     @Getter
@@ -32,11 +35,12 @@ public final class TaskSnapshot {
     @Getter
     final private long duration;
 
-    public TaskSnapshot(long id, String title, Date started, Date ended,
-            Throwable error, List<TaskOutput> output) {
+    public TaskSnapshot(long id, String title, Date started, Long parentId,
+            Date ended, Throwable error, List<TaskOutput> output) {
         this.id = id;
         this.title = title;
         this.started = started;
+        this.parentId = parentId;
         this.ended = ended;
         this.error = error;
         this.output = output;

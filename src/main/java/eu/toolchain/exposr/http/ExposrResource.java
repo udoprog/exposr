@@ -2,6 +2,7 @@ package eu.toolchain.exposr.http;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.concurrent.CountDownLatch;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -17,17 +18,19 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
 import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
 
 import org.glassfish.jersey.media.multipart.FormDataParam;
 
 import eu.toolchain.exposr.repository.Repository;
 
+@Slf4j
 @Path("/_exposr")
 @Produces(MediaType.APPLICATION_JSON)
 public class ExposrResource {
     @Inject
-    @Named("shutdownHook")
-    private Object shutdownHook;
+    @Named("shutdown")
+    private CountDownLatch shutdown;
 
     @Inject
     private Repository repository;
@@ -44,10 +47,8 @@ public class ExposrResource {
     @POST
     @Path("/shutdown")
     public Response shutdown() {
-        synchronized (shutdownHook) {
-            shutdownHook.notifyAll();
-        }
-
+        log.info("Shutting down through API call");
+        shutdown.countDown();
         return Response.status(Response.Status.OK)
                 .entity(new Message("shutting down")).build();
     }
@@ -56,15 +57,13 @@ public class ExposrResource {
     @Path("/deploy/{name}/{id}")
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     public Response deploy(@Context UriInfo info,
-            @PathParam("name") String name,
-            @PathParam("id") String id,
-            @FormDataParam("file") InputStream inputStream)
-            throws IOException {
+            @PathParam("name") String name, @PathParam("id") String id,
+            @FormDataParam("file") InputStream inputStream) throws IOException {
 
         if (inputStream == null)
             throw new BadRequestException("No 'file' field in upload");
 
-        long taskId = repository.deploy(name, id, inputStream);
+        long taskId = repository.deploy(name, id, inputStream).execute();
 
         return TaskResource.taskCreated(info, taskId);
     }

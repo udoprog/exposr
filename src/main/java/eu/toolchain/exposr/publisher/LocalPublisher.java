@@ -3,9 +3,11 @@ package eu.toolchain.exposr.publisher;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.List;
 
+import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 import net.lingala.zip4j.core.ZipFile;
 import net.lingala.zip4j.exception.ZipException;
@@ -16,13 +18,16 @@ import org.apache.commons.io.FileUtils;
 import eu.toolchain.exposr.taskmanager.TaskState;
 
 @Slf4j
+@ToString(of = { "path" })
 public class LocalPublisher implements Publisher {
+    public static final Path DEFUALT_PATH = Paths.get("./publish");
+
     private final Path path;
-    
+
     public LocalPublisher(Path path) {
         this.path = path;
     }
-    
+
     private void atomicallySymlink(final Path destination,
             final Path destinationTemp, final Path linkPath)
             throws ProjectPublishException {
@@ -30,8 +35,7 @@ public class LocalPublisher implements Publisher {
             Files.createSymbolicLink(destinationTemp, linkPath);
         } catch (IOException e) {
             throw new ProjectPublishException(
-                    "Failed to create symbolic link: "
-                    + destination, e);
+                    "Failed to create symbolic link: " + destination, e);
         }
 
         try {
@@ -70,10 +74,8 @@ public class LocalPublisher implements Publisher {
     }
 
     public static Path buildPublishDirectory(final Path path,
-            final String name,
-            final String id,
-            final List<Path> paths, final TaskState state)
-            throws ProjectPublishException {
+            final String name, final String id, final List<Path> paths,
+            final TaskState state) throws ProjectPublishException {
         final Path publishPath = path.resolve(name).resolve(id);
 
         if (Files.exists(publishPath)) {
@@ -135,8 +137,7 @@ public class LocalPublisher implements Publisher {
     }
 
     public static void extractZipFile(final Path sourcePath,
-            final Path publishPath)
-            throws ZipException {
+            final Path publishPath) throws ZipException {
         final ZipFile zipFile = new ZipFile(sourcePath.toFile());
         zipFile.extractAll(publishPath.toString());
     }

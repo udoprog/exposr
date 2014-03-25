@@ -65,7 +65,7 @@ public class SyncTask implements Task<SyncResult> {
         if (!Files.isDirectory(buildPath)) {
             state.system("Cloning to " + buildPath);
             final ObjectId headId = clone(project, buildPath);
-            return new SyncResult(false, headId);
+            return new SyncResult(true, headId);
         }
 
         final Git git;
@@ -88,7 +88,7 @@ public class SyncTask implements Task<SyncResult> {
 
             state.system("Cloning to " + buildPath);
             final ObjectId headId = clone(project, buildPath);
-            return new SyncResult(false, headId);
+            return new SyncResult(true, headId);
         }
 
         final ObjectId newHeadId;

@@ -20,6 +20,7 @@ public class SyncResource {
     @POST
     @Produces(MediaType.APPLICATION_JSON)
     public Response syncAll(@Context UriInfo info) {
-        return TaskResource.tasksCreated(info, localRepository.syncAll());
+        return TaskResource.tasksCreated(info, localRepository.syncAll()
+                .execute());
     }
 }

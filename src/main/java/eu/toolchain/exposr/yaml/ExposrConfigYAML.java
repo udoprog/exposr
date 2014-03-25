@@ -2,6 +2,7 @@ package eu.toolchain.exposr.yaml;
 
 import lombok.Getter;
 import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
 import eu.toolchain.exposr.builder.Builder;
 import eu.toolchain.exposr.builder.BuilderYAML;
 import eu.toolchain.exposr.builder.LocalBuilder;
@@ -10,11 +11,14 @@ import eu.toolchain.exposr.project.manager.ProjectManagerYAML;
 import eu.toolchain.exposr.project.reporter.MemoryProjectReporter;
 import eu.toolchain.exposr.project.reporter.ProjectReporter;
 import eu.toolchain.exposr.project.reporter.ProjectReporterYAML;
+import eu.toolchain.exposr.publisher.LocalPublisher;
 import eu.toolchain.exposr.publisher.Publisher;
 import eu.toolchain.exposr.publisher.PublisherYAML;
+import eu.toolchain.exposr.repository.LocalRepository;
 import eu.toolchain.exposr.repository.Repository;
 import eu.toolchain.exposr.repository.RepositoryYAML;
 
+@Slf4j
 public class ExposrConfigYAML {
     @Getter
     @Setter
@@ -22,7 +26,7 @@ public class ExposrConfigYAML {
 
     public ProjectManager setupProjectManager() throws ValidationException {
         if (projectManager == null)
-            throw new RuntimeException("'projectManager' must be defined");
+            throw new ValidationException("projectManager: must be defined");
 
         return projectManager.build("projectManager");
     }
@@ -32,8 +36,12 @@ public class ExposrConfigYAML {
     private RepositoryYAML repository;
 
     public Repository setupRepository() throws ValidationException {
-        if (repository == null)
-            throw new RuntimeException("'repository' must be defined");
+        if (repository == null) {
+            final Repository repository = new LocalRepository(
+                    LocalRepository.DEFAULT_PATH);
+            log.warn("Using default repository: " + repository);
+            return repository;
+        }
 
         return repository.build("repository");
     }
@@ -43,8 +51,12 @@ public class ExposrConfigYAML {
     private PublisherYAML publisher;
 
     public Publisher setupPublisher() throws ValidationException {
-        if (publisher == null)
-            throw new RuntimeException("'publisher' must be defined");
+        if (publisher == null) {
+            final Publisher publisher = new LocalPublisher(
+                    LocalPublisher.DEFUALT_PATH);
+            log.info("Using default publisher: " + publisher);
+            return publisher;
+        }
 
         return publisher.build("publisher");
     }
@@ -59,7 +71,7 @@ public class ExposrConfigYAML {
 
         return builder.build("builder");
     }
-    
+
     @Getter
     @Setter
     private ProjectReporterYAML projectReporter;
