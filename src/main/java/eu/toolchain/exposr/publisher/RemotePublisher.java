@@ -13,6 +13,8 @@ import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
+import lombok.Getter;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import net.lingala.zip4j.exception.ZipException;
 
@@ -22,9 +24,31 @@ import org.glassfish.jersey.media.multipart.MultiPartFeature;
 import org.glassfish.jersey.media.multipart.file.FileDataBodyPart;
 
 import eu.toolchain.exposr.taskmanager.TaskState;
+import eu.toolchain.exposr.yaml.UtilsYAML;
+import eu.toolchain.exposr.yaml.ValidationException;
 
 @Slf4j
 public class RemotePublisher implements Publisher {
+    public class YAML implements Publisher.YAML {
+        public static final String TYPE = "!remote-publisher";
+
+        @Getter
+        @Setter
+        private String path;
+
+        @Getter
+        @Setter
+        private String url;
+
+        @Override
+        public Publisher build(String context) throws ValidationException {
+            final Path path = UtilsYAML.toDirectory(context + ".path",
+                    this.path);
+            final URI u = UtilsYAML.toURI(context + ".url", this.url);
+            return new RemotePublisher(path, u);
+        }
+    }
+
     private final Path path;
     private final URI uri;
     

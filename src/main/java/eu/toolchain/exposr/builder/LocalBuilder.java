@@ -16,6 +16,15 @@ import eu.toolchain.exposr.yaml.ExposrManifest;
 public class LocalBuilder implements Builder {
     private static String BIN_SH = "/bin/sh";
 
+    public static class YAML implements Builder.YAML {
+        public static final String TYPE = "!local-builder";
+
+        @Override
+        public Builder build(String context) {
+            return new LocalBuilder();
+        }
+    }
+
     @Override
     public void execute(final Project project, final ExposrManifest manifest,
             final Path buildPath, final TaskState state)

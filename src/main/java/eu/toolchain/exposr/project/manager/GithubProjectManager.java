@@ -8,6 +8,8 @@ import java.util.Set;
 
 import javax.inject.Inject;
 
+import lombok.Getter;
+import lombok.Setter;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 
@@ -21,10 +23,46 @@ import eu.toolchain.exposr.project.ProjectException;
 import eu.toolchain.exposr.taskmanager.SetupTask;
 import eu.toolchain.exposr.taskmanager.TaskManager;
 import eu.toolchain.exposr.tasks.RefreshTask;
+import eu.toolchain.exposr.yaml.UtilsYAML;
+import eu.toolchain.exposr.yaml.ValidationException;
 
 @Slf4j
 @ToString(of = { "user", "remoteName" })
 public class GithubProjectManager implements RefreshableProjectManager {
+    public static class YAML implements ProjectManager.YAML {
+        public static final String TYPE = "!github-project-manager";
+
+        @Getter
+        @Setter
+        private String apiUrl = "https://api.github.com";
+
+        @Getter
+        @Setter
+        private String ref = "refs/heads/master";
+
+        @Getter
+        @Setter
+        private String user;
+
+        @Getter
+        @Setter
+        private ProjectAuth.YAML auth;
+
+        @Override
+        public ProjectManager build(String context) throws ValidationException {
+            UtilsYAML.notEmpty(context + ".user", user);
+            final ProjectAuth auth;
+
+            if (this.auth != null) {
+                auth = this.auth.build();
+            } else {
+                auth = null;
+            }
+
+            return new GithubProjectManager(apiUrl, user, ref, auth);
+        }
+    }
+
     private final GitHubClient client;
     private final String user;
     private final String remoteName;

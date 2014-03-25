@@ -41,7 +41,6 @@ import eu.toolchain.exposr.taskmanager.TaskManager;
 import eu.toolchain.exposr.taskmanager.TaskSnapshot;
 import eu.toolchain.exposr.tasks.SyncTaskResult;
 import eu.toolchain.exposr.yaml.ExposrConfig;
-import eu.toolchain.exposr.yaml.ValidationException;
 
 @Slf4j
 public class Main extends GuiceServletContextListener {
@@ -144,8 +143,8 @@ public class Main extends GuiceServletContextListener {
 
         try {
             config = ExposrConfig.parse(Paths.get(configPath));
-        } catch (ValidationException | IOException e) {
-            log.error("Invalid configuration file: " + configPath);
+        } catch (Exception e) {
+            log.error("Invalid configuration file: " + configPath, e);
             System.exit(1);
             return;
         }

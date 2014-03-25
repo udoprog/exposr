@@ -11,7 +11,7 @@ import java.util.List;
 
 import org.yaml.snakeyaml.TypeDescription;
 
-public final class Utils {
+public final class UtilsYAML {
     public static void notEmpty(String context, String string)
             throws ValidationException {
         if (string == null || string.isEmpty())
@@ -47,6 +47,14 @@ public final class Utils {
 
     public static Path toDirectory(String context, String path)
             throws ValidationException {
+        return toDirectory(context, path, null);
+    }
+
+    public static Path toDirectory(String context, String path, Path defaultPath)
+            throws ValidationException {
+        if (defaultPath != null && (path == null || path.isEmpty()))
+            return defaultPath;
+
         notEmpty(context, path);
 
         final Path p = Paths.get(path);

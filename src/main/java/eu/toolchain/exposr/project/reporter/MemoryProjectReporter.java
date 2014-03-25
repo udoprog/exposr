@@ -6,6 +6,15 @@ import java.util.List;
 import eu.toolchain.exposr.project.Project;
 
 public class MemoryProjectReporter implements ProjectReporter {
+    public class YAML implements ProjectReporter.YAML {
+        public static final String TYPE = "!memory-project-reporter";
+
+        @Override
+        public ProjectReporter build(String context) {
+            return new MemoryProjectReporter();
+        }
+    }
+
     private final MemoryProjectLog<ProjectSync> syncs = new MemoryProjectLog<ProjectSync>();
     private final MemoryProjectLog<ProjectBuild> builds = new MemoryProjectLog<ProjectBuild>();
 

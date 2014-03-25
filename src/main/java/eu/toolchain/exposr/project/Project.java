@@ -5,6 +5,8 @@ import java.nio.file.Path;
 import java.util.Collection;
 
 import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.Setter;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 
@@ -19,10 +21,43 @@ import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.Ref;
 import org.eclipse.jgit.transport.RefSpec;
 
+import eu.toolchain.exposr.yaml.UtilsYAML;
+import eu.toolchain.exposr.yaml.ValidationException;
+
 @Slf4j
 @ToString(of = { "name", "url", "ref" })
 @EqualsAndHashCode(of = { "name", "url", "ref" })
 public class Project {
+    public static class YAML {
+        @Getter
+        @Setter
+        private String name;
+
+        @Getter
+        @Setter
+        private String url;
+
+        @Getter
+        @Setter
+        private String ref = "HEAD";
+
+        @Getter
+        @Setter
+        private ProjectAuth.YAML auth;
+
+        public Project build(String context, ProjectAuth auth)
+                throws ValidationException {
+            UtilsYAML.notEmpty(context + ".name", name);
+            UtilsYAML.notEmpty(context + ".url", url);
+            UtilsYAML.notEmpty(context + ".ref", ref);
+
+            if (this.auth != null)
+                auth = this.auth.build();
+
+            return new Project(name, url, ref, auth);
+        }
+    }
+
     private final String name;
     private final String url;
     private final String ref;
@@ -103,11 +138,35 @@ public class Project {
         }
     }
 
+    private ObjectId resolve(final Git git, String ref)
+            throws ProjectException {
+        try {
+            return git.getRepository().resolve(ref);
+        } catch (IOException e) {
+            throw new ProjectException("Failed to resolve ref: " + ref);
+        }
+    }
+
+    public void clean(Path directory) throws ProjectException {
+        final Git git;
+
+        try {
+            git = Git.open(directory.toFile());
+        } catch (IOException e) {
+            throw new ProjectException(
+                    this + ": Failed to open git repository", e);
+        }
+
+        ObjectId objectId = resolve(git, Constants.HEAD);
+        clean(git);
+        resetHard(git, objectId);
+    }
+
     private void clean(final Git git) throws ProjectException {
         log.info(this + ": Cleaning local repository");
 
         try {
-            git.clean().setIgnore(true).setCleanDirectories(true).call();
+            git.clean().setIgnore(false).setCleanDirectories(true).call();
         } catch (GitAPIException e) {
             throw new ProjectException(this
                     + ": Failed to clean local repository", e);
@@ -116,13 +175,7 @@ public class Project {
 
     private void fetchIfNeeded(final Git git, ObjectId remoteId)
             throws ProjectException {
-        final ObjectId localId;
-
-        try {
-            localId = git.getRepository().resolve(ref);
-        } catch (IOException e) {
-            throw new ProjectException("Failed to resolve local reference", e);
-        }
+        final ObjectId localId = resolve(git, ref);
 
         if (localId == null || !localId.equals(remoteId)) {
             log.info(this + ": Fetching remote object: " + remoteId);

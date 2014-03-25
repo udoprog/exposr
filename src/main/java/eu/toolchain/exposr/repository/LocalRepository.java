@@ -8,6 +8,8 @@ import java.util.List;
 
 import javax.inject.Inject;
 
+import lombok.Getter;
+import lombok.Setter;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 import eu.toolchain.exposr.builder.Builder;
@@ -24,11 +26,27 @@ import eu.toolchain.exposr.tasks.BuildTask;
 import eu.toolchain.exposr.tasks.DeployTask;
 import eu.toolchain.exposr.tasks.SyncTask;
 import eu.toolchain.exposr.tasks.SyncTaskResult;
+import eu.toolchain.exposr.yaml.UtilsYAML;
+import eu.toolchain.exposr.yaml.ValidationException;
 
 @Slf4j
 @ToString(of = { "path" })
 public class LocalRepository implements Repository {
     public static Path DEFAULT_PATH = Paths.get("./repos");
+
+    public class YAML implements Repository.YAML {
+        public static final String TYPE = "!local-repository";
+
+        @Getter
+        @Setter
+        private String path;
+
+        @Override
+        public Repository build(String context) throws ValidationException {
+            final Path path = UtilsYAML.toPath(context + ".path", this.path);
+            return new LocalRepository(path);
+        }
+    }
 
     @Inject
     private ProjectManager projectManager;

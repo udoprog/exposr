@@ -5,6 +5,10 @@ import java.util.List;
 import eu.toolchain.exposr.project.Project;
 
 public interface ProjectReporter {
+    public static interface YAML {
+        public ProjectReporter build(String context);
+    }
+
     public void reportSync(long taskId, Project project, String id,
             Throwable error);
     public List<ProjectSync> getSyncs(Project project);

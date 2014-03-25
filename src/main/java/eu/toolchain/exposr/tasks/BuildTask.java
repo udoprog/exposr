@@ -18,30 +18,33 @@ import eu.toolchain.exposr.taskmanager.TaskState;
 import eu.toolchain.exposr.yaml.ExposrManifest;
 import eu.toolchain.exposr.yaml.ExposrManifestYAML;
 
-@ToString(of = { "builder", "publisher", "project", "buildPath" })
+@ToString(of = { "builder", "publisher", "project", "path" })
 public class BuildTask implements Task<Void> {
     public static final String EXPOSR_YML = ".exposr.yml";
 
     private final Builder builder;
     private final Publisher publisher;
     private final Project project;
-    private final Path buildPath;
+    private final Path path;
 
     public BuildTask(Builder builder,
-            Publisher publisher, Project project, Path buildPath) {
+            Publisher publisher, Project project, Path path) {
         this.builder = builder;
         this.publisher = publisher;
         this.project = project;
-        this.buildPath = buildPath;
+        this.path = path;
     }
 
     @Override
     public Void run(TaskState state) throws Exception {
+        state.system("Cleaning directory");
+        project.clean(path);
+
         state.system("Starting build");
 
-        final ObjectId head = project.getHead(buildPath);
+        final ObjectId head = project.getHead(path);
 
-        final Path manifestPath = buildPath.resolve(EXPOSR_YML);
+        final Path manifestPath = path.resolve(EXPOSR_YML);
 
         if (!Files.isRegularFile(manifestPath)) {
             throw new ProjectBuildException("Project has no manifest: "
@@ -53,10 +56,10 @@ public class BuildTask implements Task<Void> {
         final List<Path> paths = new ArrayList<Path>();
 
         for (final String publish : manifest.getPublish()) {
-            paths.add(buildPath.resolve(publish));
+            paths.add(path.resolve(publish));
         }
 
-        builder.execute(project, manifest, buildPath, state);
+        builder.execute(project, manifest, path, state);
         publisher.publish(project.getName(), head.name(), paths, state);
         return null;
     }
