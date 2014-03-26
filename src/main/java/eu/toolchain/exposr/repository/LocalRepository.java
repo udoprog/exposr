@@ -63,6 +63,9 @@ public class LocalRepository implements Repository {
     @Inject
     private Publisher publisher;
 
+    @Inject
+    private Repository repository;
+
     private final Path path;
 
     public LocalRepository(Path path) {

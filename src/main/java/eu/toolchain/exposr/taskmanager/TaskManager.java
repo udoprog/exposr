@@ -40,9 +40,8 @@ public class TaskManager {
             pending.put(taskId, state);
         }
 
-        if (log.isDebugEnabled()) {
+        if (log.isDebugEnabled())
             log.debug("Executing task [" + title + "] with id [" + taskId + "]");
-        }
 
         final TaskTracker<T> tracker = new TaskTracker<T>(this, state, task,
                 done, error);

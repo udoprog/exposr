@@ -104,7 +104,7 @@ public final class TaskState {
     }
 
     public TaskSnapshot snapshot() {
-        return snapshot(null, null);
+        return snapshot(new Date(), null);
     }
 
     public TaskSnapshot snapshot(Date ended, Throwable error) {

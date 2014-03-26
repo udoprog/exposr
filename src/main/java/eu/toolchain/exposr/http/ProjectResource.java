@@ -18,6 +18,7 @@ import javax.ws.rs.core.UriInfo;
 
 import lombok.Getter;
 import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
 import eu.toolchain.exposr.http.TaskResource.TaskResponse;
 import eu.toolchain.exposr.project.Project;
 import eu.toolchain.exposr.project.manager.ProjectManager;
@@ -26,6 +27,7 @@ import eu.toolchain.exposr.project.reporter.ProjectReporter;
 import eu.toolchain.exposr.project.reporter.ProjectSync;
 import eu.toolchain.exposr.repository.Repository;
 
+@Slf4j
 @Path("/_exposr/project")
 @Produces(MediaType.APPLICATION_JSON)
 public class ProjectResource {
@@ -201,7 +203,8 @@ public class ProjectResource {
             @Context UriInfo info) throws Exception {
         final Project p = ProjectResource.getProjectByName(projectManager,
                 project);
-        long id = localRepository.sync(p).execute();
+
+        final long id = localRepository.sync(p).execute();
         return TaskResource.taskCreated(info, id);
     }
 
