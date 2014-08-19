@@ -18,7 +18,7 @@ import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.Ref;
 import org.eclipse.jgit.transport.RefSpec;
 
-import eu.toolchain.exposr.yaml.UtilsYAML;
+import eu.toolchain.exposr.yaml.ConfigUtils;
 import eu.toolchain.exposr.yaml.ValidationException;
 
 @Slf4j
@@ -33,9 +33,9 @@ public class Project {
 
         public Project build(String context, ProjectAuth auth)
                 throws ValidationException {
-            UtilsYAML.notEmpty(context + ".name", name);
-            UtilsYAML.notEmpty(context + ".url", url);
-            UtilsYAML.notEmpty(context + ".ref", ref);
+            ConfigUtils.notEmpty(context + ".name", name);
+            ConfigUtils.notEmpty(context + ".url", url);
+            ConfigUtils.notEmpty(context + ".ref", ref);
 
             if (this.auth != null)
                 auth = this.auth.build();

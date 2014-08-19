@@ -24,7 +24,7 @@ import org.glassfish.jersey.media.multipart.MultiPartFeature;
 import org.glassfish.jersey.media.multipart.file.FileDataBodyPart;
 
 import eu.toolchain.exposr.taskmanager.TaskState;
-import eu.toolchain.exposr.yaml.UtilsYAML;
+import eu.toolchain.exposr.yaml.ConfigUtils;
 import eu.toolchain.exposr.yaml.ValidationException;
 
 @Slf4j
@@ -38,9 +38,9 @@ public class RemotePublisher implements Publisher {
 
         @Override
         public Publisher build(String context) throws ValidationException {
-            final Path path = UtilsYAML.toDirectory(context + ".path",
+            final Path path = ConfigUtils.toDirectory(context + ".path",
                     this.path);
-            final URI u = UtilsYAML.toURI(context + ".url", this.url);
+            final URI u = ConfigUtils.toURI(context + ".url", this.url);
             return new RemotePublisher(path, u);
         }
     }

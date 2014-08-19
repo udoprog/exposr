@@ -2,32 +2,25 @@ package eu.toolchain.exposr.taskmanager;
 
 import java.util.List;
 
+import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 
 /**
  * Track what happens with a single task.
- * 
+ *
  * @author udoprog
- * 
+ *
  * @param <T>
  *            Type of the value returned by the task.
  */
 @Slf4j
+@Data
 public final class TaskTracker<T> implements Runnable {
     private final TaskManager manager;
     private final TaskState state;
     private final Task<T> task;
     private final List<Task.Done<T>> onDone;
     private final List<Task.Error> onError;
-
-    public TaskTracker(TaskManager manager, TaskState state, Task<T> task,
-            List<Task.Done<T>> onDone, List<Task.Error> onError) {
-        this.manager = manager;
-        this.state = state;
-        this.task = task;
-        this.onDone = onDone;
-        this.onError = onError;
-    }
 
     @Override
     public void run() {

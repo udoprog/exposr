@@ -5,7 +5,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
-import lombok.ToString;
+import lombok.Data;
 
 import org.eclipse.jgit.lib.ObjectId;
 
@@ -18,7 +18,7 @@ import eu.toolchain.exposr.taskmanager.TaskState;
 import eu.toolchain.exposr.yaml.ExposrManifest;
 import eu.toolchain.exposr.yaml.ExposrManifestYAML;
 
-@ToString(of = { "builder", "publisher", "project", "path" })
+@Data
 public class BuildTask implements Task<Void> {
     public static final String EXPOSR_YML = ".exposr.yml";
 
@@ -26,14 +26,6 @@ public class BuildTask implements Task<Void> {
     private final Publisher publisher;
     private final Project project;
     private final Path path;
-
-    public BuildTask(Builder builder,
-            Publisher publisher, Project project, Path path) {
-        this.builder = builder;
-        this.publisher = publisher;
-        this.project = project;
-        this.path = path;
-    }
 
     @Override
     public Void run(TaskState state) throws Exception {

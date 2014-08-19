@@ -202,8 +202,6 @@ public class Main {
     }
 
     private static HttpServer setupHttpServer(URI baseUri, final Injector injector) {
-        log.info("Starting grizzly...");
-
         final HttpServer serverLocal = GrizzlyHttpServerFactory
                 .createHttpServer(baseUri, false);
 

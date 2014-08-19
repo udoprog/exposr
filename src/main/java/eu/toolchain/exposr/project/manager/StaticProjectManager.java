@@ -7,7 +7,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import eu.toolchain.exposr.project.Project;
 import eu.toolchain.exposr.project.ProjectAuth;
-import eu.toolchain.exposr.yaml.UtilsYAML;
+import eu.toolchain.exposr.yaml.ConfigUtils;
 import eu.toolchain.exposr.yaml.ValidationException;
 
 public class StaticProjectManager implements ProjectManager {
@@ -21,7 +21,7 @@ public class StaticProjectManager implements ProjectManager {
 
         @Override
         public ProjectManager build(String context) throws ValidationException {
-            UtilsYAML.notEmpty(context + ".projects", this.projects);
+            ConfigUtils.notEmpty(context + ".projects", this.projects);
 
             final List<Project> projects = new ArrayList<Project>();
 

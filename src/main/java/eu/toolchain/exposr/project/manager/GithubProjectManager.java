@@ -21,7 +21,7 @@ import eu.toolchain.exposr.project.ProjectException;
 import eu.toolchain.exposr.taskmanager.SetupTask;
 import eu.toolchain.exposr.taskmanager.TaskManager;
 import eu.toolchain.exposr.tasks.RefreshTask;
-import eu.toolchain.exposr.yaml.UtilsYAML;
+import eu.toolchain.exposr.yaml.ConfigUtils;
 import eu.toolchain.exposr.yaml.ValidationException;
 
 @Slf4j
@@ -38,7 +38,7 @@ public class GithubProjectManager implements RefreshableProjectManager {
 
         @Override
         public ProjectManager build(String context) throws ValidationException {
-            UtilsYAML.notEmpty(context + ".user", user);
+            ConfigUtils.notEmpty(context + ".user", user);
             final ProjectAuth auth;
 
             if (this.auth != null) {

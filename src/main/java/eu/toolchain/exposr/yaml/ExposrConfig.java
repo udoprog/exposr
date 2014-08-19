@@ -95,14 +95,14 @@ public class ExposrConfig {
     private final ProjectReporter projectReporter;
 
     private static final TypeDescription[] types = new TypeDescription[] {
-            UtilsYAML.makeType(GithubProjectManager.YAML.class),
-            UtilsYAML.makeType(StaticProjectManager.YAML.class),
-            UtilsYAML.makeType(LocalRepository.YAML.class),
-            UtilsYAML.makeType(BasicProjectAuth.YAML.class),
-            UtilsYAML.makeType(LocalPublisher.YAML.class),
-            UtilsYAML.makeType(RemotePublisher.YAML.class),
-            UtilsYAML.makeType(LocalBuilder.YAML.class),
-            UtilsYAML.makeType(MemoryProjectReporter.YAML.class), };
+            ConfigUtils.makeType(GithubProjectManager.YAML.class),
+            ConfigUtils.makeType(StaticProjectManager.YAML.class),
+            ConfigUtils.makeType(LocalRepository.YAML.class),
+            ConfigUtils.makeType(BasicProjectAuth.YAML.class),
+            ConfigUtils.makeType(LocalPublisher.YAML.class),
+            ConfigUtils.makeType(RemotePublisher.YAML.class),
+            ConfigUtils.makeType(LocalBuilder.YAML.class),
+            ConfigUtils.makeType(MemoryProjectReporter.YAML.class), };
 
     private static final class CustomConstructor extends Constructor {
         public CustomConstructor() {

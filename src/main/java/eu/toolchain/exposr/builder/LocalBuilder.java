@@ -4,7 +4,7 @@ import java.io.IOException;
 import java.lang.ProcessBuilder.Redirect;
 import java.nio.file.Path;
 
-import lombok.ToString;
+import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import eu.toolchain.exposr.project.Project;
 import eu.toolchain.exposr.taskmanager.StreamReader;
@@ -12,7 +12,7 @@ import eu.toolchain.exposr.taskmanager.TaskState;
 import eu.toolchain.exposr.yaml.ExposrManifest;
 
 @Slf4j
-@ToString
+@Data
 public class LocalBuilder implements Builder {
     private static String BIN_SH = "/bin/sh";
 

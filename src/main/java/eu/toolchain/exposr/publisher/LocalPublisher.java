@@ -17,7 +17,7 @@ import net.lingala.zip4j.model.ZipParameters;
 import org.apache.commons.io.FileUtils;
 
 import eu.toolchain.exposr.taskmanager.TaskState;
-import eu.toolchain.exposr.yaml.UtilsYAML;
+import eu.toolchain.exposr.yaml.ConfigUtils;
 import eu.toolchain.exposr.yaml.ValidationException;
 
 @Slf4j
@@ -34,7 +34,7 @@ public class LocalPublisher implements Publisher {
 
         @Override
         public Publisher build(String context) throws ValidationException {
-            final Path path = UtilsYAML.toDirectory(context + ".path",
+            final Path path = ConfigUtils.toDirectory(context + ".path",
                     this.path, LocalPublisher.DEFUALT_PATH);
             return new LocalPublisher(path, pattern);
         }

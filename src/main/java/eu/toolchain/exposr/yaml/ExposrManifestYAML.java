@@ -21,8 +21,8 @@ public class ExposrManifestYAML {
     private List<String> publish;
 
     public ExposrManifest build() throws ValidationException {
-        UtilsYAML.notEmpty("commands", commands);
-        final List<String> publish = UtilsYAML.toList("publish", this.publish);
+        ConfigUtils.notEmpty("commands", commands);
+        final List<String> publish = ConfigUtils.toList("publish", this.publish);
         return new ExposrManifest(commands, publish);
     }
 

@@ -4,7 +4,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-import lombok.ToString;
+import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 
 import org.apache.commons.io.FileUtils;
@@ -18,15 +18,10 @@ import eu.toolchain.exposr.taskmanager.Task;
 import eu.toolchain.exposr.taskmanager.TaskState;
 
 @Slf4j
-@ToString(of = { "project", "path" })
+@Data
 public class SyncTask implements Task<SyncTaskResult> {
     private final Project project;
     private final Path path;
-
-    public SyncTask(Project project, Path path) {
-        this.project = project;
-        this.path = path.toAbsolutePath().normalize();
-    }
 
     private ObjectId fetch(Project project, Path buildPath, ObjectId remoteId)
             throws ProjectException {

@@ -6,7 +6,7 @@ import org.eclipse.egit.github.core.client.GitHubClient;
 import org.eclipse.jgit.transport.CredentialsProvider;
 import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
 
-import eu.toolchain.exposr.yaml.UtilsYAML;
+import eu.toolchain.exposr.yaml.ConfigUtils;
 import eu.toolchain.exposr.yaml.ValidationException;
 
 public class BasicProjectAuth implements ProjectAuth {
@@ -18,8 +18,8 @@ public class BasicProjectAuth implements ProjectAuth {
 
         @Override
         public ProjectAuth build() throws ValidationException {
-            UtilsYAML.notEmpty("projectManager.auth.username", username);
-            UtilsYAML.notEmpty("projectManager.auth.password", password);
+            ConfigUtils.notEmpty("projectManager.auth.username", username);
+            ConfigUtils.notEmpty("projectManager.auth.password", password);
             return new BasicProjectAuth(username, password);
         }
     }

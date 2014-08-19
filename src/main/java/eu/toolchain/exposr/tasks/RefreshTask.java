@@ -1,18 +1,14 @@
 package eu.toolchain.exposr.tasks;
 
-import lombok.ToString;
+import lombok.Data;
 import eu.toolchain.exposr.project.manager.ProjectManagerRefreshed;
 import eu.toolchain.exposr.project.manager.RefreshableProjectManager;
 import eu.toolchain.exposr.taskmanager.Task;
 import eu.toolchain.exposr.taskmanager.TaskState;
 
-@ToString(of = { "manager" })
+@Data
 public class RefreshTask implements Task<ProjectManagerRefreshed> {
     private final RefreshableProjectManager manager;
-
-    public RefreshTask(RefreshableProjectManager manager) {
-        this.manager = manager;
-    }
 
     @Override
     public ProjectManagerRefreshed run(TaskState state) throws Exception {

@@ -26,7 +26,7 @@ import eu.toolchain.exposr.tasks.BuildTask;
 import eu.toolchain.exposr.tasks.DeployTask;
 import eu.toolchain.exposr.tasks.SyncTask;
 import eu.toolchain.exposr.tasks.SyncTaskResult;
-import eu.toolchain.exposr.yaml.UtilsYAML;
+import eu.toolchain.exposr.yaml.ConfigUtils;
 import eu.toolchain.exposr.yaml.ValidationException;
 
 @Slf4j
@@ -43,7 +43,7 @@ public class LocalRepository implements Repository {
 
         @Override
         public Repository build(String context) throws ValidationException {
-            final Path path = UtilsYAML.toPath(context + ".path", this.path);
+            final Path path = ConfigUtils.toPath(context + ".path", this.path);
             return new LocalRepository(path);
         }
     }

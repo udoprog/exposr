@@ -11,7 +11,7 @@ import java.util.List;
 
 import org.yaml.snakeyaml.TypeDescription;
 
-public final class UtilsYAML {
+public final class ConfigUtils {
     public static void notEmpty(String context, String string)
             throws ValidationException {
         if (string == null || string.isEmpty())
