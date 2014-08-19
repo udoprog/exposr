@@ -8,8 +8,8 @@ import java.util.List;
 
 import javax.inject.Inject;
 
-import lombok.Getter;
-import lombok.Setter;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 import eu.toolchain.exposr.builder.Builder;
@@ -34,11 +34,11 @@ import eu.toolchain.exposr.yaml.ValidationException;
 public class LocalRepository implements Repository {
     public static Path DEFAULT_PATH = Paths.get("./repos");
 
-    public class YAML implements Repository.YAML {
+    @Data
+    @NoArgsConstructor
+    public static class YAML implements Repository.YAML {
         public static final String TYPE = "!local-repository";
 
-        @Getter
-        @Setter
         private String path;
 
         @Override

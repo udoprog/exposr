@@ -3,23 +3,20 @@ package eu.toolchain.exposr.project.manager;
 import java.util.ArrayList;
 import java.util.List;
 
-import lombok.Getter;
-import lombok.Setter;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import eu.toolchain.exposr.project.Project;
 import eu.toolchain.exposr.project.ProjectAuth;
 import eu.toolchain.exposr.yaml.UtilsYAML;
 import eu.toolchain.exposr.yaml.ValidationException;
 
 public class StaticProjectManager implements ProjectManager {
-    public class YAML implements ProjectManager.YAML {
+    @Data
+    @NoArgsConstructor
+    public static class YAML implements ProjectManager.YAML {
         public static final String TYPE = "!static-project-manager";
 
-        @Getter
-        @Setter
         private List<Project.YAML> projects;
-
-        @Getter
-        @Setter
         private ProjectAuth.YAML auth;
 
         @Override

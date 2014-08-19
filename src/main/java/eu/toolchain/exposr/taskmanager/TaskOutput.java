@@ -1,11 +1,10 @@
 package eu.toolchain.exposr.taskmanager;
 
-import lombok.Getter;
+import lombok.Data;
 
+@Data
 public class TaskOutput {
-    @Getter
     private final TaskOutputType type;
-    @Getter
     private final String text;
 
     public TaskOutput(TaskOutputType type, String text) {

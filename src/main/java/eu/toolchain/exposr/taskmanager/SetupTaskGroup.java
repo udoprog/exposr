@@ -7,46 +7,29 @@ import java.util.List;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import lombok.Getter;
-import lombok.ToString;
+import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 
 /**
  * Allows for the creation of handles reacting to group of tasks.
- * 
+ *
  * @author udoprog
- * 
+ *
  * @param <T>
  *            The value type that is expected as a result from any of the tasks.
  */
 @Slf4j
 public class SetupTaskGroup<T> {
-    @ToString(of = { "task", "value" })
+    @Data
     public static class TaskResult<T> {
-        @Getter
         private final TaskSnapshot task;
-
-        @Getter
         private final T value;
-
-        public TaskResult(TaskSnapshot task, T value) {
-            this.task = task;
-            this.value = value;
-        }
     }
 
-    @ToString(of = { "task", "error" })
+    @Data
     public static class TaskError {
-        @Getter
         private final TaskSnapshot task;
-
-        @Getter
         private final Throwable error;
-
-        public TaskError(TaskSnapshot task, Throwable error) {
-            this.task = task;
-            this.error = error;
-        }
     }
 
     public static interface Handle<T> {

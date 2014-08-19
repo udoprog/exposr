@@ -3,10 +3,14 @@ package eu.toolchain.exposr.project.reporter;
 import java.util.Date;
 import java.util.List;
 
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import eu.toolchain.exposr.project.Project;
 
 public class MemoryProjectReporter implements ProjectReporter {
-    public class YAML implements ProjectReporter.YAML {
+    @Data
+    @NoArgsConstructor
+    public static class YAML implements ProjectReporter.YAML {
         public static final String TYPE = "!memory-project-reporter";
 
         @Override

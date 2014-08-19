@@ -5,15 +5,22 @@ import java.net.URI;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
+import javax.servlet.DispatcherType;
 import javax.ws.rs.core.UriBuilder;
 
 import lombok.extern.slf4j.Slf4j;
 
 import org.glassfish.grizzly.http.server.HttpServer;
+import org.glassfish.grizzly.servlet.FilterRegistration;
+import org.glassfish.grizzly.servlet.ServletRegistration;
+import org.glassfish.grizzly.servlet.WebappContext;
+import org.glassfish.jersey.grizzly2.httpserver.GrizzlyHttpServerFactory;
+import org.glassfish.jersey.servlet.ServletContainer;
 import org.quartz.Scheduler;
 import org.quartz.SchedulerException;
 
@@ -23,6 +30,7 @@ import com.google.inject.Injector;
 import com.google.inject.Module;
 import com.google.inject.Scopes;
 import com.google.inject.name.Names;
+import com.google.inject.servlet.GuiceFilter;
 import com.google.inject.servlet.GuiceServletContextListener;
 
 import eu.toolchain.exposr.builder.Builder;
@@ -43,15 +51,8 @@ import eu.toolchain.exposr.tasks.SyncTaskResult;
 import eu.toolchain.exposr.yaml.ExposrConfig;
 
 @Slf4j
-public class Main extends GuiceServletContextListener {
+public class Main {
     public static final String EXPOSR_CONFIG = "exposr.yaml";
-
-    public static Injector injector;
-
-    @Override
-    protected Injector getInjector() {
-        return injector;
-    }
 
     private static Injector setupInjector(final ExposrConfig config,
             final CountDownLatch shutdown) {
@@ -87,9 +88,10 @@ public class Main extends GuiceServletContextListener {
                         config.getProjectManager());
             }
         });
+
         modules.add(new SchedulerModule(schedulerConfig, refreshable != null));
 
-        injector = Guice.createInjector(modules);
+        final Injector injector = Guice.createInjector(modules);
 
         final Repository repository = injector.getInstance(Repository.class);
 
@@ -155,20 +157,19 @@ public class Main extends GuiceServletContextListener {
             return;
         }
 
-        final GrizzlyServer grizzlyServer = new GrizzlyServer();
         final URI baseUri = UriBuilder.fromUri("http://127.0.0.1/").port(8080)
                 .build();
 
+
         final CountDownLatch shutdown = new CountDownLatch(1);
 
-        injector = setupInjector(config, shutdown);
+        final Injector injector = setupInjector(config, shutdown);
+        final HttpServer server = setupHttpServer(baseUri, injector);
 
         final Scheduler scheduler = injector.getInstance(Scheduler.class);
 
-        final HttpServer server;
-
         try {
-            server = grizzlyServer.start(baseUri);
+            server.start();
         } catch (IOException e) {
             log.error("Failed to start grizzly server", e);
             System.exit(1);
@@ -198,5 +199,39 @@ public class Main extends GuiceServletContextListener {
 
         log.warn("Bye Bye!");
         System.exit(0);
+    }
+
+    private static HttpServer setupHttpServer(URI baseUri, final Injector injector) {
+        log.info("Starting grizzly...");
+
+        final HttpServer serverLocal = GrizzlyHttpServerFactory
+                .createHttpServer(baseUri, false);
+
+        final WebappContext context = new WebappContext("Guice Webapp sample",
+                "");
+
+        context.addListener(new GuiceServletContextListener(){
+            @Override
+            protected Injector getInjector() {
+                return injector;
+            }
+        });
+
+        // Initialize and register Jersey ServletContainer
+        final ServletRegistration servletRegistration = context.addServlet(
+                "ServletContainer", ServletContainer.class);
+        servletRegistration.addMapping("/*");
+        servletRegistration.setInitParameter("javax.ws.rs.Application",
+                WebApp.class.getName());
+
+        // Initialize and register GuiceFilter
+        final FilterRegistration registration = context.addFilter(
+                "GuiceFilter", GuiceFilter.class);
+        registration.addMappingForUrlPatterns(
+                EnumSet.allOf(DispatcherType.class), "/*");
+
+        context.deploy(serverLocal);
+
+        return serverLocal;
     }
 }

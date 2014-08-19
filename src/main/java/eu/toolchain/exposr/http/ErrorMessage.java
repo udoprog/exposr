@@ -1,12 +1,8 @@
 package eu.toolchain.exposr.http;
 
-import lombok.Getter;
+import lombok.Data;
 
+@Data
 public class ErrorMessage {
-    @Getter
     private final String message;
-
-    public ErrorMessage(String message) {
-        this.message = message;
-    }
 }

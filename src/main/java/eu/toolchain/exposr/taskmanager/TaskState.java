@@ -9,8 +9,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
-import lombok.Getter;
-import lombok.ToString;
+import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 
 import org.slf4j.Logger;
@@ -20,21 +19,18 @@ import eu.toolchain.exposr.taskmanager.TaskSubscriber.Handle;
 
 /**
  * Stores transient task state.
- * 
+ *
  * @author udoprog
  */
 @Slf4j
-@ToString(of = { "id", "title" })
+@Data
 public final class TaskState {
     private static final Logger ERR = LoggerFactory.getLogger("Task.ERR");
     private static final Logger OUT = LoggerFactory.getLogger("Task.OUT");
     private static final Logger SYS = LoggerFactory.getLogger("Task.SYS");
 
-    @Getter
     private final long id;
-    @Getter
     private final String title;
-    @Getter
     private final Long parentId;
 
     private Date started;

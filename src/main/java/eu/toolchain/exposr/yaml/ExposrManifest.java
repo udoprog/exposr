@@ -2,13 +2,12 @@ package eu.toolchain.exposr.yaml;
 
 import java.util.List;
 
+import lombok.Data;
 import lombok.Getter;
 
+@Data
 public class ExposrManifest {
-    @Getter
     private final List<String> commands;
-
-    @Getter
     private final List<String> publish;
 
     public ExposrManifest(List<String> commands, List<String> publish) {

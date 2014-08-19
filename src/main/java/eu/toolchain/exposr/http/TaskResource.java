@@ -17,7 +17,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
-import lombok.Getter;
+import lombok.Data;
 
 import org.glassfish.jersey.media.sse.EventOutput;
 import org.glassfish.jersey.media.sse.OutboundEvent;
@@ -33,10 +33,9 @@ public class TaskResource {
     @Inject
     private TaskManager taskManager;
 
+    @Data
     public static final class TaskResponse {
-        @Getter
         private final URI link;
-        @Getter
         private final URI output;
 
         public TaskResponse(URI link, URI output) {
@@ -46,31 +45,14 @@ public class TaskResource {
     }
 
     public static class TaskSnapshotResponse {
-        @Getter
         final long id;
-
-        @Getter
         final String title;
-
-        @Getter
         final private Date started;
-
-        @Getter
         final private Date ended;
-
-        @Getter
         final private List<String> errors;
-
-        @Getter
         final private List<TaskOutput> output;
-
-        @Getter
         final private long duration;
-
-        @Getter
         final private boolean success;
-
-        @Getter
         final TaskResponse parent;
 
         public TaskSnapshotResponse(long id, String title, Date started,

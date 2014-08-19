@@ -3,39 +3,22 @@ package eu.toolchain.exposr.taskmanager;
 import java.util.Date;
 import java.util.List;
 
-import lombok.Getter;
-import lombok.ToString;
+import lombok.Data;
 
 /**
  * An immutable snapshot of TaskState.
- * 
+ *
  * @author udoprog
  */
-@ToString(of = { "id", "title", "started", "ended", "parentId", "error",
-        "duration" })
+@Data
 public final class TaskSnapshot {
-    @Getter
     final long id;
-
-    @Getter
     final String title;
-
-    @Getter
     final private Date started;
-
-    @Getter
     final private Date ended;
-
-    @Getter
     final Long parentId;
-
-    @Getter
     final private Throwable error;
-
-    @Getter
     final private List<TaskOutput> output;
-
-    @Getter
     final private long duration;
 
     public TaskSnapshot(long id, String title, Date started, Long parentId,

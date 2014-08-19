@@ -17,7 +17,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
-import lombok.Getter;
+import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 
 import org.glassfish.jersey.media.multipart.FormDataParam;
@@ -35,8 +35,8 @@ public class ExposrResource {
     @Inject
     private Repository repository;
 
+    @Data
     public static final class Message {
-        @Getter
         private final String message;
 
         public Message(String message) {

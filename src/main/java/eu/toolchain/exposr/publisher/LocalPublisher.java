@@ -8,9 +8,7 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.List;
 
-import lombok.Getter;
-import lombok.Setter;
-import lombok.ToString;
+import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import net.lingala.zip4j.core.ZipFile;
 import net.lingala.zip4j.exception.ZipException;
@@ -23,19 +21,15 @@ import eu.toolchain.exposr.yaml.UtilsYAML;
 import eu.toolchain.exposr.yaml.ValidationException;
 
 @Slf4j
-@ToString(of = { "path" })
+@Data
 public class LocalPublisher implements Publisher {
     public static final Path DEFUALT_PATH = Paths.get("./publish");
 
+    @Data
     public static class YAML implements Publisher.YAML {
         public static final String TYPE = "!local-publisher";
 
-        @Getter
-        @Setter
         private String path;
-
-        @Getter
-        @Setter
         private String pattern;
 
         @Override
@@ -48,11 +42,6 @@ public class LocalPublisher implements Publisher {
 
     private final Path path;
     private final String pattern;
-
-    public LocalPublisher(Path path, String pattern) {
-        this.path = path;
-        this.pattern = pattern;
-    }
 
     private void atomicallySymlink(final Path destination,
             final Path destinationTemp, final Path linkPath)

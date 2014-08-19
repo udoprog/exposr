@@ -2,6 +2,7 @@ package eu.toolchain.exposr;
 
 import javax.inject.Inject;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 import org.glassfish.hk2.api.ServiceLocator;
@@ -21,9 +22,10 @@ import eu.toolchain.exposr.http.SyncResource;
 import eu.toolchain.exposr.http.TaskResource;
 
 @Slf4j
+@RequiredArgsConstructor
 public class WebApp extends ResourceConfig {
     @Inject
-    public WebApp(ServiceLocator serviceLocator) {
+    public WebApp(Injector injector, ServiceLocator serviceLocator) {
         log.info("Setting up Web Application");
 
         register(SseFeature.class);
@@ -41,8 +43,6 @@ public class WebApp extends ResourceConfig {
 
         final GuiceIntoHK2Bridge bridge = serviceLocator
                 .getService(GuiceIntoHK2Bridge.class);
-
-        final Injector injector = Main.injector;
 
         bridge.bridgeGuiceInjector(injector);
     }

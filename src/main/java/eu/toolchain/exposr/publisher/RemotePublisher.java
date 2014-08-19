@@ -13,8 +13,8 @@ import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
-import lombok.Getter;
-import lombok.Setter;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.lingala.zip4j.exception.ZipException;
 
@@ -29,15 +29,11 @@ import eu.toolchain.exposr.yaml.ValidationException;
 
 @Slf4j
 public class RemotePublisher implements Publisher {
-    public class YAML implements Publisher.YAML {
+    @Data
+    @NoArgsConstructor
+    public static class YAML implements Publisher.YAML {
         public static final String TYPE = "!remote-publisher";
-
-        @Getter
-        @Setter
         private String path;
-
-        @Getter
-        @Setter
         private String url;
 
         @Override
@@ -51,7 +47,7 @@ public class RemotePublisher implements Publisher {
 
     private final Path path;
     private final URI uri;
-    
+
     public RemotePublisher(Path path, URI uri) {
         this.path = path;
         this.uri = uri;

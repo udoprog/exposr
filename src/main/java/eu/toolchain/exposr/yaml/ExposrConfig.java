@@ -4,9 +4,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-import lombok.Getter;
-import lombok.Setter;
-import lombok.ToString;
+import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 
 import org.yaml.snakeyaml.TypeDescription;
@@ -27,29 +25,15 @@ import eu.toolchain.exposr.publisher.RemotePublisher;
 import eu.toolchain.exposr.repository.LocalRepository;
 import eu.toolchain.exposr.repository.Repository;
 
-@ToString(of = { "projectManager", "repository", "publisher", "builder",
-        "projectReporter" })
+@Data
 public class ExposrConfig {
     @Slf4j
+    @Data
     public static class YAML {
-        @Getter
-        @Setter
         private ProjectManager.YAML projectManager;
-
-        @Getter
-        @Setter
         private Repository.YAML repository;
-
-        @Getter
-        @Setter
         private Publisher.YAML publisher;
-
-        @Getter
-        @Setter
         private Builder.YAML builder;
-
-        @Getter
-        @Setter
         private ProjectReporter.YAML projectReporter;
 
         public ProjectManager setupProjectManager() throws ValidationException {
@@ -96,35 +80,19 @@ public class ExposrConfig {
         }
 
         public ExposrConfig build() throws ValidationException {
-            final ExposrConfig config = new ExposrConfig();
-            config.setProjectManager(setupProjectManager());
-            config.setRepository(setupRepository());
-            config.setPublisher(setupPublisher());
-            config.setBuilder(setupBuilder());
-            config.setProjectReporter(setupProjectReporter());
-            return config;
+            return new ExposrConfig(setupProjectManager(),
+                    setupRepository(),
+                    setupPublisher(),
+                    setupBuilder(),
+                    setupProjectReporter());
         }
     }
 
-    @Getter
-    @Setter
-    private ProjectManager projectManager;
-
-    @Getter
-    @Setter
-    private Repository repository;
-
-    @Getter
-    @Setter
-    private Publisher publisher;
-
-    @Getter
-    @Setter
-    private Builder builder;
-
-    @Getter
-    @Setter
-    private ProjectReporter projectReporter;
+    private final ProjectManager projectManager;
+    private final Repository repository;
+    private final Publisher publisher;
+    private final Builder builder;
+    private final ProjectReporter projectReporter;
 
     private static final TypeDescription[] types = new TypeDescription[] {
             UtilsYAML.makeType(GithubProjectManager.YAML.class),

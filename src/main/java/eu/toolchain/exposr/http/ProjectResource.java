@@ -16,8 +16,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
-import lombok.Getter;
-import lombok.Setter;
+import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import eu.toolchain.exposr.http.TaskResource.TaskResponse;
 import eu.toolchain.exposr.project.Project;
@@ -40,17 +39,11 @@ public class ProjectResource {
     @Inject
     private Repository localRepository;
 
+    @Data
     public static final class SyncResponse {
-        @Getter
         private final TaskResponse task;
-
-        @Getter
         private final Date date;
-
-        @Getter
         private final String id;
-
-        @Getter
         private final String error;
 
         public SyncResponse(TaskResponse task, Date date, String id,
@@ -86,14 +79,10 @@ public class ProjectResource {
         }
     }
 
+    @Data
     public static final class BuildResponse {
-        @Getter
         private final TaskResponse task;
-
-        @Getter
         private final Date date;
-
-        @Getter
         private final String error;
 
         public BuildResponse(TaskResponse task, Date date, Throwable error) {
@@ -128,41 +117,23 @@ public class ProjectResource {
         }
     }
 
+    @Data
     public static final class ProjectResponse {
-        @Getter
-        @Setter
-        private String name;
-
-        @Getter
-        @Setter
-        private SyncResponse lastSync;
-
-        @Getter
-        @Setter
-        private BuildResponse lastBuild;
+        private final String name;
+        private final SyncResponse lastSync;
+        private final BuildResponse lastBuild;
     }
 
+    @Data
     public static final class ProjectDetailedResponse {
-        @Getter
-        @Setter
-        private String name;
-
-        @Getter
-        @Setter
-        private List<SyncResponse> syncs;
-
-        @Getter
-        @Setter
-        private List<BuildResponse> builds;
+        private final String name;
+        private final List<SyncResponse> syncs;
+        private final List<BuildResponse> builds;
     }
 
+    @Data
     public static final class Message {
-        @Getter
         private final String message;
-
-        public Message(String message) {
-            this.message = message;
-        }
     }
 
     @GET
@@ -170,12 +141,12 @@ public class ProjectResource {
         final List<ProjectResponse> response = new ArrayList<ProjectResponse>();
 
         for (final Project project : projectManager.getProjects()) {
-            final ProjectResponse status = new ProjectResponse();
-            status.setName(project.getName());
-            status.setLastSync(SyncResponse.build(info,
-                    projectReporter.getLastSync(project)));
-            status.setLastBuild(BuildResponse.build(info,
-                    projectReporter.getLastBuild(project)));
+            final ProjectResponse status = new ProjectResponse(
+                    project.getName(),
+                    SyncResponse.build(info,
+                            projectReporter.getLastSync(project)),
+                    BuildResponse.build(info,
+                            projectReporter.getLastBuild(project)));
             response.add(status);
         }
 
@@ -188,11 +159,11 @@ public class ProjectResource {
             @PathParam("project") String project) {
         final Project p = getProjectByName(projectManager, project);
 
-        final ProjectDetailedResponse status = new ProjectDetailedResponse();
-        status.setName(p.getName());
-        status.setSyncs(SyncResponse.buildAll(info, projectReporter.getSyncs(p)));
-        status.setBuilds(BuildResponse.buildAll(info,
-                projectReporter.getBuilds(p)));
+        final ProjectDetailedResponse status = new ProjectDetailedResponse(
+                p.getName(),
+                SyncResponse.buildAll(info, projectReporter.getSyncs(p)),
+                BuildResponse.buildAll(info,
+                        projectReporter.getBuilds(p)));
 
         return status;
     }

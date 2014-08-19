@@ -4,10 +4,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Collection;
 
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.Setter;
-import lombok.ToString;
+import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 
 import org.eclipse.jgit.api.CloneCommand;
@@ -25,24 +22,13 @@ import eu.toolchain.exposr.yaml.UtilsYAML;
 import eu.toolchain.exposr.yaml.ValidationException;
 
 @Slf4j
-@ToString(of = { "name", "url", "ref" })
-@EqualsAndHashCode(of = { "name", "url", "ref" })
+@Data
 public class Project {
+    @Data
     public static class YAML {
-        @Getter
-        @Setter
         private String name;
-
-        @Getter
-        @Setter
         private String url;
-
-        @Getter
-        @Setter
         private String ref = "HEAD";
-
-        @Getter
-        @Setter
         private ProjectAuth.YAML auth;
 
         public Project build(String context, ProjectAuth auth)

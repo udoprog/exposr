@@ -1,7 +1,6 @@
 package eu.toolchain.exposr.project;
 
-import lombok.Getter;
-import lombok.Setter;
+import lombok.Data;
 
 import org.eclipse.egit.github.core.client.GitHubClient;
 import org.eclipse.jgit.transport.CredentialsProvider;
@@ -11,15 +10,10 @@ import eu.toolchain.exposr.yaml.UtilsYAML;
 import eu.toolchain.exposr.yaml.ValidationException;
 
 public class BasicProjectAuth implements ProjectAuth {
+    @Data
     public static class YAML implements ProjectAuth.YAML {
         public static final String TYPE = "!basic-auth";
-
-        @Getter
-        @Setter
         private String username;
-
-        @Getter
-        @Setter
         private String password;
 
         @Override

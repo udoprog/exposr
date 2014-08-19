@@ -7,22 +7,17 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
-import lombok.Getter;
-import lombok.Setter;
+import lombok.Data;
 
 import org.yaml.snakeyaml.Yaml;
 
 import eu.toolchain.exposr.project.ProjectException;
 
+@Data
 public class ExposrManifestYAML {
     private static final Yaml yaml = new Yaml();
 
-    @Getter
-    @Setter
     private List<String> commands;
-
-    @Getter
-    @Setter
     private List<String> publish;
 
     public ExposrManifest build() throws ValidationException {

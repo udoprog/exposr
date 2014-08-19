@@ -1,6 +1,6 @@
 package eu.toolchain.exposr;
 
-import lombok.Getter;
+import lombok.Data;
 
 import org.apache.onami.scheduler.QuartzModule;
 import org.quartz.JobKey;
@@ -12,11 +12,9 @@ public class SchedulerModule extends QuartzModule {
     public static final JobKey REFRESH = JobKey.jobKey("refresh");
     public static final JobKey LS_REMOTE = JobKey.jobKey("lsRemote");
 
+    @Data
     public static final class Config {
-        @Getter
         private final String syncRemotesSchedule = "0 0 * * * ?";
-
-        @Getter
         private final String refreshProjectManagerSchedule = "0 0/15 * * * ?";
     }
 
